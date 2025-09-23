@@ -1,0 +1,16 @@
+# Add directories or file patterns to ignore during indexing (e.g. foo/ or *.csv)
+*.docx
+*.pdf
+*.pptx
+*.xlsx
+*.xls
+*.csv
+*.txt
+*.xml
+
+.DS_Store
+.gitignore
+.git
+.github
+.vscode
+.idea

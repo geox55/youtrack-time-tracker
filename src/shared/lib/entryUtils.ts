@@ -23,6 +23,124 @@ export const groupEntriesByDate = (entries: TimeEntry[]): Record<string, TimeEnt
   }, {});
 };
 
+export const groupEntriesByIssue = (entries: TimeEntry[]): TimeEntry[] => {
+  const groupedMap = new Map<string, TimeEntry[]>();
+
+  // Группируем трекинги по issue ID + дате
+  entries.forEach(entry => {
+    const issueId = extractIssueId(entry.description);
+    const entryDate = entry.start.split('T')[0];
+    const groupKey = `${issueId}-${entryDate}`; // Ключ: issueId-дата
+
+    if (issueId) {
+      if (!groupedMap.has(groupKey)) {
+        groupedMap.set(groupKey, []);
+      }
+      groupedMap.get(groupKey)!.push(entry);
+    }
+  });
+
+  // Объединяем трекинги в один для каждой задачи в рамках одного дня
+  const groupedEntries: TimeEntry[] = [];
+
+  groupedMap.forEach((issueEntries) => {
+    if (issueEntries.length === 0) return;
+
+    // Сортируем по времени начала
+    issueEntries.sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
+
+    // Берем первый трекинг как основу
+    const firstEntry = issueEntries[0];
+
+    // Суммируем общую продолжительность
+    const totalDuration = issueEntries.reduce((sum, entry) => sum + entry.duration, 0);
+
+    // Находим самое раннее время начала и самое позднее время окончания
+    const startTimes = issueEntries.map(entry => new Date(entry.start).getTime());
+    const stopTimes = issueEntries
+      .map(entry => entry.stop ? new Date(entry.stop).getTime() : new Date(entry.start).getTime() + entry.duration * 1000)
+      .filter(time => !isNaN(time));
+
+    const earliestStart = new Date(Math.min(...startTimes));
+    const latestStop = stopTimes.length > 0 ? new Date(Math.max(...stopTimes)) : null;
+
+    // Создаем объединенный трекинг
+    const groupedEntry: TimeEntry = {
+      id: firstEntry.id, // Используем ID первого трекинга
+      description: firstEntry.description, // Берем описание из первого трекинга
+      start: earliestStart.toISOString(),
+      stop: latestStop ? latestStop.toISOString() : null,
+      duration: totalDuration
+    };
+
+    groupedEntries.push(groupedEntry);
+  });
+
+  return groupedEntries;
+};
+
+// Расширенный тип для группированных трекингов с информацией об оригинальных ID
+export interface GroupedTimeEntry extends TimeEntry {
+  originalIds: number[];
+}
+
+export const groupEntriesByIssueWithOriginalIds = (entries: TimeEntry[]): GroupedTimeEntry[] => {
+  const groupedMap = new Map<string, TimeEntry[]>();
+
+  // Группируем трекинги по issue ID + дате
+  entries.forEach(entry => {
+    const issueId = extractIssueId(entry.description);
+    const entryDate = entry.start.split('T')[0];
+    const groupKey = `${issueId}-${entryDate}`; // Ключ: issueId-дата
+
+    if (issueId) {
+      if (!groupedMap.has(groupKey)) {
+        groupedMap.set(groupKey, []);
+      }
+      groupedMap.get(groupKey)!.push(entry);
+    }
+  });
+
+  // Объединяем трекинги в один для каждой задачи в рамках одного дня
+  const groupedEntries: GroupedTimeEntry[] = [];
+
+  groupedMap.forEach((issueEntries) => {
+    if (issueEntries.length === 0) return;
+
+    // Сортируем по времени начала
+    issueEntries.sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
+
+    // Берем первый трекинг как основу
+    const firstEntry = issueEntries[0];
+
+    // Суммируем общую продолжительность
+    const totalDuration = issueEntries.reduce((sum, entry) => sum + entry.duration, 0);
+
+    // Находим самое раннее время начала и самое позднее время окончания
+    const startTimes = issueEntries.map(entry => new Date(entry.start).getTime());
+    const stopTimes = issueEntries
+      .map(entry => entry.stop ? new Date(entry.stop).getTime() : new Date(entry.start).getTime() + entry.duration * 1000)
+      .filter(time => !isNaN(time));
+
+    const earliestStart = new Date(Math.min(...startTimes));
+    const latestStop = stopTimes.length > 0 ? new Date(Math.max(...stopTimes)) : null;
+
+    // Создаем объединенный трекинг с информацией об оригинальных ID
+    const groupedEntry: GroupedTimeEntry = {
+      id: firstEntry.id, // Используем ID первого трекинга
+      description: firstEntry.description, // Берем описание из первого трекинга
+      start: earliestStart.toISOString(),
+      stop: latestStop ? latestStop.toISOString() : null,
+      duration: totalDuration,
+      originalIds: issueEntries.map(entry => entry.id) // Сохраняем все оригинальные ID
+    };
+
+    groupedEntries.push(groupedEntry);
+  });
+
+  return groupedEntries;
+};
+
 export const extractIssueId = (description: string): string | null => {
   const match = description?.match(/^([A-Z]+-\d+)/);
   return match ? match[1] : null;

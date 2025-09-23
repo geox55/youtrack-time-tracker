@@ -9,14 +9,14 @@ export const TrackerPage = () => {
   const { tokens, setTokens } = useTokens();
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
 
-  const { timeEntries, loading, error: timeEntriesError, loadTimeEntries } = useTimeEntries(tokens, selectedDate);
+  const { timeEntries, groupedEntries, loading, error: timeEntriesError, loadTimeEntries } = useTimeEntries(tokens, selectedDate);
   const { workItemsMap, loading: workItemsLoading, error: workItemsError } = useAllWorkItems(tokens, timeEntries, selectedDate);
   const {
     transferredEntries,
     error: transferError,
     transferToYouTrack,
     checkExistingEntries
-  } = useTransfer(tokens, timeEntries, selectedDate, workItemsMap);
+  } = useTransfer(tokens, timeEntries, selectedDate, workItemsMap, groupedEntries);
 
   const error = timeEntriesError || workItemsError || transferError;
 

@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { TimeEntry, Tokens } from '@/shared/model';
 import { useTogglEntries } from '@/shared/hooks';
-import { filterEntriesWithYouTrackId, sortEntriesByDate } from '@/shared/lib';
+import { filterEntriesWithYouTrackId, sortEntriesByDate, groupEntriesByIssueWithOriginalIds, GroupedTimeEntry } from '@/shared/lib';
 
 export const useTimeEntries = (tokens: Tokens, selectedDate: string) => {
   const [timeEntries, setTimeEntries] = useState<TimeEntry[]>([]);
+  const [groupedEntries, setGroupedEntries] = useState<GroupedTimeEntry[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
 
@@ -24,8 +25,10 @@ export const useTimeEntries = (tokens: Tokens, selectedDate: string) => {
   useEffect(() => {
     if (rawEntries.length > 0) {
       const filteredEntries = filterEntriesWithYouTrackId(rawEntries);
-      const sortedEntries = sortEntriesByDate(filteredEntries);
+      const grouped = groupEntriesByIssueWithOriginalIds(filteredEntries);
+      const sortedEntries = sortEntriesByDate(grouped);
       setTimeEntries(sortedEntries);
+      setGroupedEntries(grouped);
       setError('');
     }
   }, [rawEntries]);
@@ -38,6 +41,7 @@ export const useTimeEntries = (tokens: Tokens, selectedDate: string) => {
 
   return {
     timeEntries,
+    groupedEntries,
     loading: loading || isLoading,
     error,
     loadTimeEntries
