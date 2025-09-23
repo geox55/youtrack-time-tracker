@@ -1,0 +1,261 @@
+---
+description: Code Quality Guidelines
+globs: 
+alwaysApply: true
+---
+
+# Clean Code Rules
+
+## Problem: Vague Information Verification
+- The "Verify Information" rule lacks specific guidelines on what constitutes valid verification methods. This creates ambiguity about when and how to verify information, potentially leading to inconsistent application across different scenarios.
+
+Bad example: 
+```javascript
+// Assuming this API returns user data
+const userData = await fetchUser(id)
+```
+
+Good example:
+```javascript
+// Verify API response structure before using
+const userData = await fetchUser(id)
+if (!userData || !userData.id) {
+  throw new Error('Invalid user data received')
+}
+```
+
+## Problem: Unclear File Modification Scope
+- The "File-by-File Changes" rule doesn't specify how to handle interdependent changes across multiple files. This can lead to broken functionality when changes in one file require corresponding updates in related files.
+
+Bad example: 
+```javascript
+// Changing interface in types.ts without updating implementations
+interface User {
+  name: string // removed email field
+}
+```
+
+Good example:
+```javascript
+// Update interface and all dependent files together
+interface User {
+  name: string
+  // TODO: Update UserService.ts to remove email field usage
+}
+```
+
+## Problem: Inconsistent Communication Standards
+- The "No Apologies" rule lacks context for when acknowledgment of mistakes is appropriate. This can create confusion about professional communication standards in error correction scenarios.
+
+Bad example: 
+```javascript
+// Sorry, I made an error in the previous implementation
+function calculateTotal() { ... }
+```
+
+Good example:
+```javascript
+// Corrected calculation logic
+function calculateTotal() { ... }
+```
+
+## Problem: Missing Context for Understanding Feedback
+- The "No Understanding Feedback" rule doesn't differentiate between redundant acknowledgments and necessary clarification requests. This can prevent important communication about unclear requirements.
+
+Bad example: 
+```javascript
+// I understand you want to add validation
+function validateInput(data) { ... }
+```
+
+Good example:
+```javascript
+// Input validation with email format check
+function validateInput(data) { ... }
+```
+
+## Problem: Overly Restrictive Whitespace Policy
+- The "No Whitespace Suggestions" rule may prevent necessary formatting improvements for code readability. Critical formatting issues that affect code maintainability should be addressed.
+
+Bad example: 
+```javascript
+function calculate(){let x=5;let y=10;return x+y;}
+```
+
+Good example:
+```javascript
+function calculate() {
+  const x = 5
+  const y = 10
+  return x + y
+}
+```
+
+## Problem: Limited Change Documentation
+- The "No Summaries" rule prevents tracking of modification rationale. This makes it difficult to understand the purpose and impact of changes during code reviews.
+
+Bad example: 
+```javascript
+// Changed the function
+function processData() { ... }
+```
+
+Good example:
+```javascript
+// Optimized data processing for better performance
+function processData() { ... }
+```
+
+## Problem: Incomplete Context Utilization
+- The "No Unnecessary Confirmations" rule doesn't address scenarios where context might be incomplete or ambiguous. This can lead to incorrect assumptions about requirements.
+
+Bad example: 
+```javascript
+// Assuming database connection without confirming configuration
+const db = connect(process.env.DB_URL)
+```
+
+Good example:
+```javascript
+// Validate required environment variables exist
+const dbUrl = process.env.DB_URL
+if (!dbUrl) {
+  throw new Error('DB_URL environment variable is required')
+}
+const db = connect(dbUrl)
+```
+
+## Problem: Undefined Code Preservation Boundaries
+- The "Preserve Existing Code" rule lacks specificity about what constitutes "unrelated" functionality. This can result in maintaining deprecated or harmful code patterns.
+
+Bad example: 
+```javascript
+// Keeping insecure authentication method unchanged
+function authenticate(password) {
+  return password === 'admin123' // Preserved existing logic
+}
+```
+
+Good example:
+```javascript
+// Improved authentication while preserving core functionality
+function authenticate(password) {
+  return bcrypt.compare(password, hashedPassword)
+}
+```
+
+## Problem: Inefficient Edit Delivery Method
+- The "Single Chunk Edits" rule may create overwhelming change sets that are difficult to review. Large modifications should be broken down for better comprehension.
+
+Bad example: 
+```javascript
+// Massive single change affecting 500+ lines across multiple functions
+function massiveRefactor() {
+  // All changes in one block
+}
+```
+
+Good example:
+```javascript
+// Logical grouping of related changes
+// Phase 1: Update data models
+class User { ... }
+
+// Phase 2: Update service methods
+class UserService { ... }
+```
+
+## Problem: Missing Error Handling Standards
+- No guidelines exist for consistent error handling patterns. This leads to inconsistent error management across the codebase.
+
+Bad example: 
+```javascript
+function processUser(id) {
+  const user = getUser(id)
+  return user.name.toUpperCase()
+}
+```
+
+Good example:
+```javascript
+function processUser(id) {
+  try {
+    const user = getUser(id)
+    if (!user?.name) {
+      throw new Error('User name not found')
+    }
+    return user.name.toUpperCase()
+  } catch (error) {
+    logger.error('Failed to process user', { id, error })
+    throw error
+  }
+}
+```
+
+## Problem: Lack of Performance Guidelines
+- No rules address performance considerations or optimization practices. This can result in inefficient code that impacts application performance.
+
+Bad example: 
+```javascript
+function findUsers(criteria) {
+  return users.filter(user => 
+    expensiveOperation(user) && 
+    user.name.includes(criteria)
+  )
+}
+```
+
+Good example:
+```javascript
+function findUsers(criteria) {
+  return users
+    .filter(user => user.name.includes(criteria))
+    .filter(user => expensiveOperation(user))
+}
+```
+
+## Problem: Missing Security Standards
+- No guidelines exist for secure coding practices. This creates vulnerability risks in authentication, data handling, and input validation.
+
+Bad example: 
+```javascript
+function executeQuery(userInput) {
+  return database.query(`SELECT * FROM users WHERE name = '${userInput}'`)
+}
+```
+
+Good example:
+```javascript
+function executeQuery(userInput) {
+  const sanitizedInput = sanitize(userInput)
+  return database.query('SELECT * FROM users WHERE name = ?', [sanitizedInput])
+}
+```
+
+## Problem: Undefined Testing Requirements
+- No rules specify testing standards or coverage requirements. This leads to inconsistent test quality and potential regression issues.
+
+Bad example: 
+```javascript
+function calculateDiscount(price, percentage) {
+  return price * (percentage / 100)
+}
+// No tests provided
+```
+
+Good example:
+```javascript
+function calculateDiscount(price, percentage) {
+  if (price < 0 || percentage < 0) {
+    throw new Error('Price and percentage must be positive')
+  }
+  return price * (percentage / 100)
+}
+
+// Test coverage included
+describe('calculateDiscount', () => {
+  it('should calculate discount correctly', () => {
+    expect(calculateDiscount(100, 10)).toBe(10)
+  })
+})
+```

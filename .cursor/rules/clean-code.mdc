@@ -1,0 +1,379 @@
+---
+description: Guidelines for writing clean, maintainable, and human-readable code. Apply these rules when writing or reviewing code to ensure consistency and quality.
+globs:
+alwaysApply: true
+---
+
+# Clean Code Guidelines Analysis
+
+## Problem: Constants Over Magic Numbers
+
+- Constants Placement Inconsistency - The rule suggests keeping constants "at the top of the file or in a dedicated constants file" without clear criteria for when to choose each approach. This leads to inconsistent constant placement across the codebase.
+
+Bad example:
+```javascript
+const API_TIMEOUT = 5000;
+function fetchUser() {
+  const MAX_RETRIES = 3; // Should be at file level
+  // implementation
+}
+```
+
+Good example:
+```javascript
+const API_TIMEOUT = 5000;
+const MAX_RETRIES = 3;
+function fetchUser() {
+  // implementation using constants
+}
+```
+
+- Missing Constant Scoping Guidelines - No guidance on when to use module-level vs global constants. This creates confusion about constant visibility and reusability across different parts of the application.
+
+Bad example:
+```javascript
+// In every file
+const HTTP_STATUS_OK = 200;
+```
+
+Good example:
+```javascript
+// In constants.js
+export const HTTP_STATUS = {
+  OK: 200,
+  NOT_FOUND: 404,
+  SERVER_ERROR: 500
+};
+```
+
+## Problem: Meaningful Names
+
+- Context-Dependent Name Clarity - The rule doesn't address how name meaning changes based on scope and context. Variable names that seem clear in isolation may become ambiguous in larger codebases.
+
+Bad example:
+```javascript
+function processData(data) {
+  const result = transform(data);
+  return result;
+}
+```
+
+Good example:
+```javascript
+function processUserRegistration(userData) {
+  const validatedUserData = validateAndTransform(userData);
+  return validatedUserData;
+}
+```
+
+- Abbreviation Guidelines Vagueness - "Universally understood" abbreviations are subjective and vary between teams and domains. Needs specific examples and decision criteria.
+
+Bad example:
+```javascript
+const btn = document.getElementById('submitBtn'); // btn unclear
+const mgr = new UserManager(); // mgr ambiguous
+```
+
+Good example:
+```javascript
+const submitButton = document.getElementById('submitBtn');
+const userManager = new UserManager();
+// Accepted: API, URL, HTTP, JSON (truly universal)
+```
+
+## Problem: Smart Comments
+
+- Missing Comment Types Classification - The rule doesn't distinguish between different comment types (TODO, FIXME, HACK) and when each should be used, leading to inconsistent documentation practices.
+
+Bad example:
+```javascript
+// This is a temporary fix
+// TODO: refactor this later
+// HACK: workaround for browser bug
+```
+
+Good example:
+```javascript
+// FIXME: Memory leak when processing large datasets (Issue #DEV-123)
+// TODO: Replace with async/await after Node 16 migration
+// HACK: IE11 compatibility - remove after Q2 2024
+```
+
+- API Documentation Standards Missing - No specific guidance on what constitutes proper API documentation, leading to incomplete or inconsistent documentation.
+
+Bad example:
+```javascript
+/**
+ * Gets user data
+ */
+function getUser(id) { }
+```
+
+Good example:
+```javascript
+/**
+ * Retrieves user data from the database
+ * @param {string} id - Unique user identifier
+ * @returns {Promise<User>} User object with profile data
+ * @throws {NotFoundError} When user doesn't exist
+ */
+function getUser(id) { }
+```
+
+## Problem: Single Responsibility
+
+- Responsibility Definition Ambiguity - "One thing" is subjective and needs concrete criteria for identifying when a function has multiple responsibilities.
+
+Bad example:
+```javascript
+function processUser(userData) {
+  // Validation, transformation, and database saving
+  if (!userData.email) throw new Error('Email required');
+  userData.email = userData.email.toLowerCase();
+  return database.save(userData);
+}
+```
+
+Good example:
+```javascript
+function validateUser(userData) {
+  if (!userData.email) throw new Error('Email required');
+}
+
+function normalizeUserData(userData) {
+  return { ...userData, email: userData.email.toLowerCase() };
+}
+
+function saveUser(userData) {
+  return database.save(userData);
+}
+```
+
+- Function Size Guidelines Missing - No specific guidance on maximum function length or complexity, making "small and focused" subjective.
+
+Bad example:
+```javascript
+function processOrder() {
+  // 50+ lines of mixed validation, calculation, and persistence
+}
+```
+
+Good example:
+```javascript
+// Each function under 20 lines, single level of abstraction
+function validateOrder(order) { /* 5-10 lines */ }
+function calculateTotal(items) { /* 8-12 lines */ }
+function persistOrder(order) { /* 6-8 lines */ }
+```
+
+## Problem: DRY (Don't Repeat Yourself)
+
+- Over-Abstraction Risk Not Addressed - The rule encourages extraction without warning about premature abstraction that can make code harder to understand and maintain.
+
+Bad example:
+```javascript
+// Over-abstracted
+function createStringProcessor(prefix, suffix, transform) {
+  return (str) => prefix + transform(str) + suffix;
+}
+```
+
+Good example:
+```javascript
+// Three different use cases, keep separate
+function formatUserName(name) { return `User: ${name.toUpperCase()}`; }
+function formatErrorMessage(msg) { return `Error: ${msg}`; }
+function formatSuccessMessage(msg) { return `Success: ${msg}`; }
+```
+
+- Duplication vs Similarity Distinction Missing - No guidance on distinguishing between true duplication (which should be extracted) and similar-looking code that serves different purposes.
+
+Bad example:
+```javascript
+// Extracting different validation logic just because it looks similar
+function validateInput(input, type) {
+  if (type === 'email') return /\S+@\S+/.test(input);
+  if (type === 'phone') return /\d{10}/.test(input);
+}
+```
+
+Good example:
+```javascript
+// Keep separate - different purposes, different evolution
+function validateEmail(email) { return /\S+@\S+\.com$/.test(email); }
+function validatePhone(phone) { return /^\d{3}-\d{3}-\d{4}$/.test(phone); }
+```
+
+## Problem: Clean Structure
+
+- File Organization Criteria Missing - No guidance on when to split files, how to group related functionality, or maximum file size recommendations.
+
+Bad example:
+```javascript
+// 500+ line file with multiple unrelated classes
+class UserManager { }
+class OrderProcessor { }
+class PaymentHandler { }
+```
+
+Good example:
+```javascript
+// Separate files by domain and responsibility
+// userManager.js - max 150 lines
+// orderProcessor.js - max 200 lines
+// paymentHandler.js - max 100 lines
+```
+
+## Problem: Encapsulation
+
+
+- Access Level Guidelines Undefined - No specific rules for determining what should be private, protected, or public in different contexts.
+
+Bad example:
+```javascript
+class DatabaseConnection {
+  connection = null; // Should be private
+  config = {}; // Should be private
+  connect() { /* public method */ }
+}
+```
+
+Good example:
+```javascript
+class DatabaseConnection {
+  #connection = null;
+  #config = {};
+  connect() { /* public interface */ }
+  disconnect() { /* public interface */ }
+}
+```
+
+## Problem: Code Quality Maintenance
+
+- Technical Debt Identification Criteria Missing - No specific guidance on how to identify technical debt or prioritize refactoring efforts.
+
+Bad example:
+```javascript
+// No clear identification of what constitutes debt
+// Random refactoring without priority
+```
+
+Good example:
+```javascript
+// Use metrics: cyclomatic complexity > 10
+// Files > 300 lines
+// TODO comments older than 3 months
+```
+
+- Refactoring Strategy Undefined - "Refactor continuously" lacks specific timing, scope, and methodology guidance.
+
+Bad example:
+```javascript
+// Refactoring everything at once
+// No testing before refactoring
+```
+
+Good example:
+```javascript
+// Red-Green-Refactor cycle
+// 1. Ensure tests pass
+// 2. Make small incremental changes
+// 3. Verify tests still pass
+// 4. Commit each successful refactor
+```
+
+## Problem: Testing
+- Test Structure Standards Undefined - No guidance on test organization, naming conventions, or structure patterns.
+
+Bad example:
+```javascript
+test('test1', () => { /* unclear purpose */ });
+test('another test', () => { /* mixed concerns */ });
+```
+
+Good example:
+```javascript
+describe('UserService', () => {
+  describe('validateEmail', () => {
+    it('should accept valid email addresses', () => { });
+    it('should reject invalid email formats', () => { });
+    it('should handle null input gracefully', () => { });
+  });
+});
+```
+
+## Problem: Error Handling Standards
+
+- Consistent Error Handling Strategy - No guidelines for error handling patterns, error message formatting, or recovery strategies across the application.
+
+Bad example:
+```javascript
+function processData(data) {
+  if (!data) return null;
+  try { return transform(data); }
+  catch { return undefined; }
+}
+```
+
+Good example:
+```javascript
+class DataProcessor {
+  processData(data) {
+    if (!data) throw new ValidationError('Data is required');
+    try { return this.transform(data); }
+    catch (error) { throw new ProcessingError('Failed to process data', error); }
+  }
+}
+```
+
+## Problem: Performance Guidelines
+
+- Performance Considerations - No guidance on writing performant code, identifying bottlenecks, or optimization strategies.
+
+Bad example:
+```javascript
+// No performance considerations
+function processLargeArray(items) {
+  return items.map(item => 
+    items.filter(other => other.category === item.category)
+  );
+}
+```
+
+Good example:
+```javascript
+// O(n) instead of O(n²)
+function processLargeArray(items) {
+  const grouped = items.reduce((acc, item) => {
+    acc[item.category] = acc[item.category] || [];
+    acc[item.category].push(item);
+    return acc;
+  }, {});
+  return grouped;
+}
+```
+
+## Problem: Security Best Practices
+
+- Security-First Development - No guidelines for secure coding practices, input validation, or common vulnerability prevention.
+
+Bad example:
+```javascript
+function executeQuery(userInput) {
+  return database.query(`SELECT * FROM users WHERE name = ${userInput}`);
+}
+```
+
+Good example:
+```javascript
+function executeQuery(userInput) {
+  const sanitizedInput = sanitize(userInput);
+  return database.query('SELECT * FROM users WHERE name = ?', [sanitizedInput]);
+}
+```
+
+## Conclusion
+
+- Write tests before fixing bugs
+- Keep tests readable and maintainable
+- Test edge cases and error conditions

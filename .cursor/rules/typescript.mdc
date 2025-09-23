@@ -1,0 +1,362 @@
+---
+description: TypeScript coding standards and best practices for modern web development
+globs: **/*.ts,**/*.tsx,**/*.d.ts,**/*.mts,**/*.d.mts,**/*.test.ts
+alwaysApply: false
+---
+# TypeScript Best Practices Analysis
+
+## Problem Any Type Usage
+
+- Overusing the `any` type undermines TypeScript's benefits by disabling type checking. Many developers transitioning from JavaScript rely heavily on `any` to avoid type errors, but this eliminates the safety and tooling advantages that TypeScript provides.
+
+Bad example: 
+```typescript
+function add(a: any, b: any): any {
+  return a + b;
+}
+const result = add(5, "10"); // Returns "510" instead of 15
+```
+
+Good example:
+```typescript
+function add(a: number, b: number): number {
+  return a + b;
+}
+// Or use generics for more flexibility
+function combine<T>(a: T, b: T, combiner: (x: T, y: T) => T): T {
+  return combiner(a, b);
+}
+```
+
+## Problem Type Assertions Misuse  
+
+- Type assertions using `as` bypass TypeScript's type checking and can lead to runtime errors if incorrect. Developers often misuse type assertions to force types instead of properly narrowing them with type guards.
+
+Bad example:
+```typescript
+let userInput: unknown = getUserInput();
+let strLength: number = (userInput as string).length; // Crashes if not string
+```
+
+Good example:
+```typescript
+let userInput: unknown = getUserInput();
+if (typeof userInput === 'string') {
+  let strLength: number = userInput.length; // Type-safe
+}
+```
+
+## Problem Interface vs Type Confusion
+- Using `interface` instead of `type` for object definitions is preferred for consistency and centralized definition management. While both can define object shapes, interfaces provide better organization by encouraging single-source definitions rather than duplicated type declarations across the codebase.
+
+Bad example:
+```typescript
+type UserData = {
+  name: string;
+  age: number;
+};
+// Leads to potential duplication across files
+type UserProfile = {
+  name: string;
+  age: number;
+  email: string;
+};
+```
+
+Good example:
+```typescript
+interface UserData {
+  name: string;
+  age: number;
+}
+// Single source of truth, clear inheritance
+interface UserProfile extends UserData {
+  email: string;
+}
+```
+
+## Problem Inconsistent Naming Conventions
+
+- Mixing different naming conventions throughout a codebase reduces readability and maintainability. Inconsistent naming makes code harder to navigate and understand for team members.
+
+Bad example:
+```typescript
+const UserName = "John";
+const user_age = 25;
+const userAddress = "123 Main St";
+interface buttonProps { }
+interface ButtonState { }
+```
+
+Good example:
+```typescript
+const userName = "John";
+const userAge = 25;
+const userAddress = "123 Main St";
+interface ButtonProps { }
+interface ButtonState { }
+```
+
+## Problem Missing Return Type Annotations
+
+- Omitting explicit return types for functions leads to implicit `any` returns and reduces type safety. When TypeScript cannot infer return types, it defaults to `any`, eliminating type checking benefits.
+
+Bad example:
+```typescript
+function processData(data: string[]) {
+  return data.map(item => ({ processed: item })); // Inferred return type may be unclear
+}
+```
+
+Good example:
+```typescript
+interface ProcessedItem {
+  processed: string;
+}
+function processData(data: string[]): ProcessedItem[] {
+  return data.map(item => ({ processed: item }));
+}
+```
+
+## Problem Overcomplicated Type Definitions
+
+- Creating unnecessarily complex types makes code difficult to understand and maintain. While TypeScript supports advanced type features, overusing them can create cognitive overhead without meaningful benefits.
+
+Bad example:
+```typescript
+type ComplexConditional<T> = T extends { wheels: 2 } 
+  ? T extends { engine: infer E } 
+    ? E extends "electric" 
+      ? "eco-friendly" 
+      : "gas-powered"
+    : "no-engine"
+  : "not-two-wheeled";
+```
+
+Good example:
+```typescript
+interface Vehicle {
+  wheels: number;
+  engine?: "electric" | "gas";
+}
+type VehicleType = "eco-friendly" | "gas-powered" | "no-engine" | "not-two-wheeled";
+function categorizeVehicle(vehicle: Vehicle): VehicleType {
+  // Simple, readable logic
+}
+```
+
+## Problem Ignoring TypeScript Errors
+
+- Using `@ts-ignore` to suppress TypeScript errors instead of fixing underlying issues masks potential bugs. This practice defeats TypeScript's purpose and can lead to runtime failures.
+
+Bad example:
+```typescript
+function multiply(a: number, b: number): number {
+  return a * b;
+}
+// @ts-ignore
+const result = multiply(5, "10"); // Type error suppressed
+```
+
+Good example:
+```typescript
+function multiply(a: number, b: number): number {
+  return a * b;
+}
+const result = multiply(5, 10); // Proper types used
+```
+
+## Problem Missing Immutability Patterns
+
+- Not using `readonly` and `const` assertions allows unintended mutations that can cause bugs. TypeScript provides immutability features that prevent accidental state changes.
+
+Bad example:
+```typescript
+const config = {
+  apiUrl: "https://api.example.com",
+  timeout: 5000
+};
+config.apiUrl = "https://malicious.com"; // Allowed but dangerous
+```
+
+Good example:
+```typescript
+const config = {
+  apiUrl: "https://api.example.com",
+  timeout: 5000
+} as const;
+// config.apiUrl = "https://malicious.com"; // Error: Cannot assign to read-only property
+```
+
+## Problem Insufficient Error Handling Types
+
+- Not defining specific error types makes error handling less predictable and harder to debug. Generic error handling reduces type safety and makes it difficult to handle different error scenarios appropriately.
+
+Bad example:
+```typescript
+async function fetchUser(id: string) {
+  try {
+    return await api.get(`/users/${id}`);
+  } catch (error) {
+    throw error; // Generic error, no type information
+  }
+}
+```
+
+Good example:
+```typescript
+class UserNotFoundError extends Error {
+  constructor(public userId: string) {
+    super(`User with ID ${userId} not found`);
+  }
+}
+class NetworkError extends Error {
+  constructor(public statusCode: number) {
+    super(`Network error: ${statusCode}`);
+  }
+}
+async function fetchUser(id: string): Promise<User> {
+  try {
+    return await api.get(`/users/${id}`);
+  } catch (error) {
+    if (error.status === 404) {
+      throw new UserNotFoundError(id);
+    }
+    throw new NetworkError(error.status);
+  }
+}
+```
+
+## Problem Performance Issues with Type Checking
+
+- Complex types and excessive type computations can cause significant slowdowns in IDE responsiveness and compilation times. Large type unions, deeply nested conditional types, and recursive type definitions can overwhelm the TypeScript compiler.
+
+Bad example:
+```typescript
+type DeepNested<T, D extends number = 10> = D extends 0 
+  ? never 
+  : {
+    [K in keyof T]: T[K] extends object 
+      ? DeepNested<T[K], Prev<D>>
+      : T[K]
+    };
+// This recursive type can cause performance issues
+```
+
+Good example:
+```typescript
+// Use utility types and keep nesting reasonable
+type ShallowPartial<T> = {
+  [K in keyof T]?: T[K] extends object ? Partial<T[K]> : T[K];
+};
+// Or break complex types into smaller, composed pieces
+```
+
+## Problem Missing Module Boundaries
+
+- Not organizing types and interfaces properly across modules makes code harder to maintain and can lead to circular dependencies. Poor module organization creates tight coupling and reduces code reusability.
+
+Bad example:
+```typescript
+// Everything in one large file
+export interface User { }
+export interface Product { }
+export interface Order { }
+export interface Payment { }
+export class UserService { }
+export class ProductService { }
+// ... all mixed together
+```
+
+Good example:
+```typescript
+// types/user.ts
+export interface User { }
+export interface UserPreferences { }
+
+// types/product.ts  
+export interface Product { }
+export interface ProductCategory { }
+
+// services/userService.ts
+import { User } from '../types/user';
+export class UserService { }
+```
+
+## Problem Inadequate Generic Constraints
+
+- Using generics without proper constraints allows types that don't make sense for the intended use case. Unconstrained generics can accept any type, reducing type safety and potentially causing runtime errors.
+
+Bad example:
+```typescript
+function getProperty<T, K>(obj: T, key: K) {
+  return obj[key]; // Error: K might not be a key of T
+}
+```
+
+Good example:
+```typescript
+function getProperty<T, K extends keyof T>(obj: T, key: K): T[K] {
+  return obj[key]; // Type-safe property access
+}
+```
+
+## Problem Missing Utility Type Usage
+
+- Not leveraging TypeScript's built-in utility types leads to repetitive type definitions and missed optimization opportunities. Utility types like `Pick`, `Omit`, `Partial`, and `Required` reduce boilerplate and improve maintainability.
+
+Bad example:
+```typescript
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  password: string;
+}
+interface PublicUser {
+  id: string;
+  name: string;
+  email: string;
+  // Manually redefining without password
+}
+```
+
+Good example:
+```typescript
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  password: string;
+}
+type PublicUser = Omit<User, 'password'>;
+type UserUpdate = Partial<Pick<User, 'name' | 'email'>>;
+```
+
+## Problem Insufficient Type Guards
+
+- Not using proper type guards for runtime type checking can lead to unexpected behavior when dealing with unknown or union types. Type guards ensure that types are correctly narrowed at runtime, providing both type safety and proper error handling.
+
+Bad example:
+```typescript
+function processValue(value: string | number | object) {
+  // No type checking - could fail at runtime
+  return value.toString().toUpperCase();
+}
+```
+
+Good example:
+```typescript
+function isString(value: unknown): value is string {
+  return typeof value === 'string';
+}
+function processValue(value: string | number | object): string {
+  if (isString(value)) {
+    return value.toUpperCase();
+  }
+  if (typeof value === 'number') {
+    return value.toString().toUpperCase();  
+  }
+  return JSON.stringify(value).toUpperCase();
+}
+```
