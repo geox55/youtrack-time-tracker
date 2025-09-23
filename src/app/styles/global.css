@@ -419,6 +419,9 @@ body {
   padding: 1.25rem;
   transition: all 0.2s ease;
   position: relative;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
 }
 
 .time-entry-card:hover {
@@ -430,6 +433,17 @@ body {
 .time-entry-card.transferred {
   background: #d4edda;
   border-color: #c3e6cb;
+}
+
+.time-entry-card.validation-error {
+  border-color: #dc3545;
+  background: #f8d7da;
+}
+
+.time-entry-card.validation-error .entry-header {
+  border-bottom: 1px solid #f5c6cb;
+  padding-bottom: 0.5rem;
+  margin-bottom: 0.5rem;
 }
 
 .entry-header {
@@ -463,6 +477,9 @@ body {
   line-height: 1.5;
   margin-bottom: 0.75rem;
   font-size: 0.95rem;
+  flex: 1;
+  display: flex;
+  align-items: center;
 }
 
 .entry-time {
@@ -475,6 +492,50 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-top: auto;
+}
+
+.entry-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.validation-indicator {
+  font-size: 1.2rem;
+  transition: transform 0.2s ease;
+}
+
+.validation-indicator:hover {
+  transform: scale(1.1);
+}
+
+.validation-indicator.valid {
+  color: #28a745;
+}
+
+.validation-indicator.error {
+  color: #dc3545;
+}
+
+.validation-indicator.warning {
+  color: #ffc107;
+}
+
+.validation-details-button {
+  background: #6c757d;
+  color: white;
+  border: none;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: all 0.2s ease;
+}
+
+.validation-details-button:hover {
+  background: #545b62;
+  transform: translateY(-1px);
 }
 
 .entry-date {
@@ -518,10 +579,168 @@ body {
 .error {
   background: #f8d7da;
   color: #721c24;
-  padding: 1rem;
+}
+
+/* Validation Details Modal */
+.validation-details-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  backdrop-filter: blur(2px);
+}
+
+.validation-details {
+  background: white;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+.validation-details-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.validation-details-header h3 {
+  margin: 0;
+  color: #333;
+}
+
+.validation-details-content {
+  padding: 20px;
+}
+
+.validation-error {
+  margin-bottom: 20px;
+}
+
+.validation-error h4 {
+  margin: 0 0 10px 0;
+  color: #dc3545;
+}
+
+.error-message {
+  background: #f8d7da;
+  color: #721c24;
+  padding: 12px;
+  border-radius: 6px;
+  border-left: 4px solid #dc3545;
+}
+
+.error-message.error {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.error-message.warning {
+  background: #fff3cd;
+  color: #856404;
+  border-left-color: #ffc107;
+}
+
+.validation-result h4 {
+  margin: 0 0 15px 0;
+  color: #333;
+}
+
+.duration-comparison {
+  background: #f8f9fa;
+  padding: 15px;
   border-radius: 8px;
-  margin-bottom: 1rem;
-  border: 1px solid #f5c6cb;
+  margin-bottom: 20px;
+}
+
+.duration-item {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.duration-item .source {
+  font-weight: 500;
+  color: #555;
+}
+
+.duration-item .duration {
+  font-weight: 600;
+  color: #333;
+}
+
+.duration-diff {
+  display: flex;
+  justify-content: space-between;
+  padding-top: 8px;
+  border-top: 1px solid #e0e0e0;
+  font-weight: 600;
+}
+
+.diff-value.valid {
+  color: #28a745;
+}
+
+.diff-value.invalid {
+  color: #dc3545;
+}
+
+.work-items {
+  margin-top: 20px;
+}
+
+.work-items h4 {
+  margin: 0 0 15px 0;
+  color: #333;
+}
+
+.work-items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.work-item {
+  background: #f8f9fa;
+  padding: 12px;
+  border-radius: 6px;
+  border-left: 3px solid #007bff;
+}
+
+.work-item-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.work-item-duration {
+  background: #007bff;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.work-item-date {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.work-item-text {
+  color: #555;
+  font-size: 0.9rem;
+  line-height: 1.4;
 }
 
 /* Responsive Design */

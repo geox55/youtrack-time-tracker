@@ -1,4 +1,5 @@
-import { TimeEntry } from 'shared/model';
+import { TimeEntry } from '@/shared/model';
+import { TimeValidationResult, ValidationError } from '../time-validation';
 
 export interface TimeEntriesListProps {
   timeEntries: TimeEntry[];
@@ -9,6 +10,8 @@ export interface TimeEntriesListProps {
   onDateChange: (date: string) => void;
   onTransfer: (entry: TimeEntry) => void;
   onRefresh: () => void;
+  validationResults?: Record<number, TimeValidationResult>;
+  validationErrors?: Record<number, ValidationError>;
 }
 
 export interface TimeEntryCardProps {
@@ -17,4 +20,6 @@ export interface TimeEntryCardProps {
   formatDuration: (seconds: number) => string;
   formatTime: (dateString: string) => string;
   onTransfer: (entry: TimeEntry) => void;
+  validationResult?: TimeValidationResult;
+  validationError?: ValidationError;
 }

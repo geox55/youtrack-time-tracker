@@ -11,7 +11,9 @@ export const TimeEntriesList = memo(({
   transferredEntries,
   onDateChange,
   onTransfer,
-  onRefresh
+  onRefresh,
+  validationResults,
+  validationErrors
 }: TimeEntriesListProps) => {
   // Группируем трекинги по датам
   const groupedEntries = groupEntriesByDate(timeEntries);
@@ -59,6 +61,8 @@ export const TimeEntriesList = memo(({
                 formatDuration={formatDuration}
                 formatTime={formatTime}
                 onTransfer={onTransfer}
+                validationResult={validationResults?.[entry.id]}
+                validationError={validationErrors?.[entry.id]}
               />
             ))}
           </div>

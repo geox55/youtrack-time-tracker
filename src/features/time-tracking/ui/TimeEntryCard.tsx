@@ -1,22 +1,33 @@
-import { memo } from 'react';
+import { memo, useState } from 'react';
 import { TimeEntryCardProps } from '../types';
 import { extractIssueId, extractDescription } from '@/shared/lib';
+import { ValidationIndicator, ValidationDetails } from '../../time-validation';
 
 export const TimeEntryCard = memo(({
   entry,
   isTransferred,
   formatDuration,
   formatTime,
-  onTransfer
+  onTransfer,
+  validationResult,
+  validationError
 }: TimeEntryCardProps) => {
+  const [showValidationDetails, setShowValidationDetails] = useState(false);
   const issueId = extractIssueId(entry.description) || 'Неизвестная задача';
   const description = extractDescription(entry.description);
 
+  const hasValidationError = validationError || (validationResult && !validationResult.isValid);
+
   return (
-    <div className={`time-entry-card ${isTransferred ? 'transferred' : ''}`}>
+    <div className={`time-entry-card ${isTransferred ? 'transferred' : ''} ${hasValidationError ? 'validation-error' : ''}`}>
       <div className="entry-header">
         <span className="entry-issue-id">{issueId}</span>
         <span className="entry-duration">{formatDuration(entry.duration)}</span>
+        <ValidationIndicator
+          validationResult={validationResult}
+          validationError={validationError}
+          className="validation-indicator"
+        />
       </div>
 
       <div className="entry-description" title={entry.description}>
@@ -33,20 +44,39 @@ export const TimeEntryCard = memo(({
       <div className="entry-footer">
         <span className="entry-date">{entry.start.split('T')[0]}</span>
 
-        {isTransferred ? (
-          <span className="transferred-status">
-            ✅ Перенесено
-          </span>
-        ) : (
-          <button
-            className="transfer-button"
-            onClick={() => onTransfer(entry)}
-            title={`Перенести в YouTrack timesheet`}
-          >
-            📤 Перенести
-          </button>
-        )}
+        <div className="entry-actions">
+          {hasValidationError && (
+            <button
+              className="validation-details-button"
+              onClick={() => setShowValidationDetails(true)}
+              title="Показать детали валидации"
+            >
+              🔍 Детали
+            </button>
+          )}
+
+          {isTransferred ? (
+            <span className="transferred-status">
+              ✅ Перенесено
+            </span>
+          ) : (
+            <button
+              className="transfer-button"
+              onClick={() => onTransfer(entry)}
+              title={`Перенести в YouTrack timesheet`}
+            >
+              📤 Перенести
+            </button>
+          )}
+        </div>
       </div>
+
+      <ValidationDetails
+        validationResult={validationResult}
+        validationError={validationError}
+        isOpen={showValidationDetails}
+        onClose={() => setShowValidationDetails(false)}
+      />
     </div>
   );
 });

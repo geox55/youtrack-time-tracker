@@ -156,7 +156,6 @@ export const isEntryTransferred = (entry: TimeEntry, workItems: WorkItem[], curr
   if (!issueId) return false;
 
   const entryDate = entry.start.split('T')[0];
-  const trackingDescription = extractDescription(entry.description);
   const entryDurationMinutes = Math.round(entry.duration / 60);
 
   const entryDateObj = new Date(entryDate);
@@ -182,12 +181,8 @@ export const isEntryTransferred = (entry: TimeEntry, workItems: WorkItem[], curr
     const entryDateOnly = new Date(entryDateObj.getFullYear(), entryDateObj.getMonth(), entryDateObj.getDate());
     const isSameDate = itemDateOnly.getTime() === entryDateOnly.getTime();
 
-    const isSameDescription = item.text && trackingDescription &&
-      (item.text.toLowerCase().includes(trackingDescription.toLowerCase()) ||
-        trackingDescription.toLowerCase().includes(item.text.toLowerCase()));
-
     const isSameDuration = Math.abs((item.duration?.minutes || 0) - entryDurationMinutes) <= 2;
 
-    return isSameDate && isSameDescription && isSameDuration;
+    return isSameDate && isSameDuration;
   });
 };

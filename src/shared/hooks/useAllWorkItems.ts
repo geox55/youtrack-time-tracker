@@ -3,7 +3,7 @@ import { TimeEntry, WorkItem } from '@/shared/model';
 import { useYouTrackPagination } from './useYouTrackPagination';
 import { extractIssueId } from '@/shared/lib';
 
-export const useAllWorkItems = (tokens: any, timeEntries: TimeEntry[], selectedDate: string) => {
+export const useAllWorkItems = (tokens: any, timeEntries: TimeEntry[], selectedDate: string, refreshKey?: number) => {
   const [workItemsMap, setWorkItemsMap] = useState<Record<string, WorkItem[]>>({});
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
@@ -52,7 +52,7 @@ export const useAllWorkItems = (tokens: any, timeEntries: TimeEntry[], selectedD
     };
 
     fetchAllWorkItems();
-  }, [tokens.youtrackToken, issueIds, selectedDate]);
+  }, [tokens.youtrackToken, issueIds, selectedDate, refreshKey]);
 
   return {
     workItemsMap,
