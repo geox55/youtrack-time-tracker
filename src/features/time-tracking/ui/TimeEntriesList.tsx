@@ -42,8 +42,7 @@ export const TimeEntriesList = memo(({
 
       {loading && <div className="loading">Загрузка трекингов...</div>}
 
-
-      {sortedDates.map(date => (
+      {!loading && sortedDates.map(date => (
         <div key={date} className="date-group">
           <div className="date-header">
             <h3>{formatDate(date)}</h3>
@@ -69,7 +68,7 @@ export const TimeEntriesList = memo(({
         </div>
       ))}
 
-      {sortedDates.length === 0 && !loading && (
+      {!loading && sortedDates.length === 0 && (
         <div className="no-entries">
           <p>Нет трекингов за выбранный период</p>
         </div>
