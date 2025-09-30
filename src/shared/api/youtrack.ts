@@ -1,19 +1,21 @@
 import { WorkItem } from '../model/types';
+import { axiosInstance } from './axiosInstance';
 
 export const youtrackApi = {
-  async request(endpoint: string, token: string, options: RequestInit = {}): Promise<any> {
-    const response = await fetch(`/api/youtrack${endpoint}`, {
-      ...options,
+  async request(endpoint: string, token: string, options: any = {}): Promise<any> {
+    const response = await axiosInstance({
+      url: `/api/youtrack${endpoint}`,
+      method: options.method || 'GET',
+      data: options.body,
       headers: {
         'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
         'Accept': 'application/json',
         ...options.headers
-      }
+      },
+      ...options
     });
 
-    if (!response.ok) throw new Error(`YouTrack API error: ${response.statusText}`);
-    return response.json();
+    return response.data;
   },
 
   async getWorkItems(token: string, issueId: string, skip: number = 0, pageSize: number = 100): Promise<WorkItem[]> {
@@ -22,7 +24,6 @@ export const youtrackApi = {
       token
     );
   },
-
 
   async createWorkItem(token: string, issueId: string, workItem: WorkItem): Promise<void> {
     await this.request(

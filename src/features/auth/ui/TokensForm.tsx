@@ -2,13 +2,13 @@ import { useState } from 'react';
 import { TokensFormProps } from '../types';
 
 export const TokensForm = ({ tokens, setTokens }: TokensFormProps) => {
-  const [isExpanded, setIsExpanded] = useState<boolean>(false);
 
   const handleChange = (field: keyof typeof tokens, value: string): void => {
     setTokens((prev: typeof tokens) => ({ ...prev, [field]: value }));
   };
 
-  const allFieldsFilled = Object.values(tokens).every((token: string) => token.trim() !== '');
+  const allFieldsFilled = Object.values(tokens).every((token) => (token as string).trim() !== '');
+  const [isExpanded, setIsExpanded] = useState<boolean>(!allFieldsFilled);
 
   return (
     <div className="tokens-form">

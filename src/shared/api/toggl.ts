@@ -1,18 +1,20 @@
 import { TimeEntry } from '../model/types';
+import { axiosInstance } from './axiosInstance';
 
 export const togglApi = {
-  async request(endpoint: string, token: string, options: RequestInit = {}): Promise<any> {
-    const response = await fetch(`https://api.track.toggl.com/api/v9${endpoint}`, {
-      ...options,
+  async request(endpoint: string, token: string, options: any = {}): Promise<any> {
+    const response = await axiosInstance({
+      url: `/api/toggl${endpoint}`,
+      method: options.method || 'GET',
+      data: options.body,
       headers: {
         'Authorization': `Basic ${btoa(token + ':api_token')}`,
-        'Content-Type': 'application/json',
         ...options.headers
-      }
+      },
+      ...options
     });
 
-    if (!response.ok) throw new Error(`Toggl API error: ${response.statusText}`);
-    return response.json();
+    return response.data;
   },
 
   async getTimeEntries(token: string, startDate: string, endDate: string): Promise<TimeEntry[]> {
