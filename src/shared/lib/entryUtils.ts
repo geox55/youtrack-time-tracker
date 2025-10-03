@@ -1,6 +1,10 @@
 import { TimeEntry, WorkItem } from '../model/types';
 
 export const filterEntriesWithYouTrackId = (entries: TimeEntry[]): TimeEntry[] => {
+  if (!Array.isArray(entries)) {
+    console.warn('filterEntriesWithYouTrackId: entries is not an array', entries);
+    return [];
+  }
   return entries.filter(entry =>
     entry.description && entry.description.match(/^[A-Z]+-\d+\s*:/)
   );
@@ -26,11 +30,10 @@ export const groupEntriesByDate = (entries: TimeEntry[]): Record<string, TimeEnt
 export const groupEntriesByIssue = (entries: TimeEntry[]): TimeEntry[] => {
   const groupedMap = new Map<string, TimeEntry[]>();
 
-  // Группируем трекинги по issue ID + дате
   entries.forEach(entry => {
     const issueId = extractIssueId(entry.description);
     const entryDate = entry.start.split('T')[0];
-    const groupKey = `${issueId}-${entryDate}`; // Ключ: issueId-дата
+    const groupKey = `${issueId}-${entryDate}`;
 
     if (issueId) {
       if (!groupedMap.has(groupKey)) {
@@ -40,22 +43,17 @@ export const groupEntriesByIssue = (entries: TimeEntry[]): TimeEntry[] => {
     }
   });
 
-  // Объединяем трекинги в один для каждой задачи в рамках одного дня
   const groupedEntries: TimeEntry[] = [];
 
   groupedMap.forEach((issueEntries) => {
     if (issueEntries.length === 0) return;
 
-    // Сортируем по времени начала
     issueEntries.sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
 
-    // Берем первый трекинг как основу
     const firstEntry = issueEntries[0];
 
-    // Суммируем общую продолжительность
     const totalDuration = issueEntries.reduce((sum, entry) => sum + entry.duration, 0);
 
-    // Находим самое раннее время начала и самое позднее время окончания
     const startTimes = issueEntries.map(entry => new Date(entry.start).getTime());
     const stopTimes = issueEntries
       .map(entry => entry.stop ? new Date(entry.stop).getTime() : new Date(entry.start).getTime() + entry.duration * 1000)
@@ -64,10 +62,9 @@ export const groupEntriesByIssue = (entries: TimeEntry[]): TimeEntry[] => {
     const earliestStart = new Date(Math.min(...startTimes));
     const latestStop = stopTimes.length > 0 ? new Date(Math.max(...stopTimes)) : null;
 
-    // Создаем объединенный трекинг
     const groupedEntry: TimeEntry = {
-      id: firstEntry.id, // Используем ID первого трекинга
-      description: firstEntry.description, // Берем описание из первого трекинга
+      id: firstEntry.id,
+      description: firstEntry.description,
       start: earliestStart.toISOString(),
       stop: latestStop ? latestStop.toISOString() : null,
       duration: totalDuration

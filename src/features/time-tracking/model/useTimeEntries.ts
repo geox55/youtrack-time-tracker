@@ -23,7 +23,7 @@ export const useTimeEntries = (tokens: Tokens, selectedDate: string) => {
   }, [refetch]);
 
   useEffect(() => {
-    if (rawEntries.length > 0) {
+    if (Array.isArray(rawEntries) && rawEntries.length > 0) {
       const filteredEntries = filterEntriesWithYouTrackId(rawEntries);
       const grouped = groupEntriesByIssueWithOriginalIds(filteredEntries);
       const sortedEntries = sortEntriesByDate(grouped);
