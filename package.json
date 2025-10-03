@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "deploy": "npm run build && ./scripts/deploy.sh"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.90.1",

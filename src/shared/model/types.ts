@@ -1,7 +1,6 @@
 export interface Tokens {
   togglToken: string;
   youtrackToken: string;
-  workspaceId: string;
 }
 
 export interface TimeEntry {

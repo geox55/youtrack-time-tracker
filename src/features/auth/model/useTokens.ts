@@ -5,7 +5,6 @@ export const useTokens = () => {
   const [tokens, setTokens] = useState<Tokens>({
     togglToken: localStorage.getItem('togglToken') || '',
     youtrackToken: localStorage.getItem('youtrackToken') || '',
-    workspaceId: localStorage.getItem('workspaceId') || ''
   });
 
   // Сохранение токенов в localStorage

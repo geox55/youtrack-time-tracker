@@ -32,16 +32,6 @@ export const TokensForm = ({ tokens, setTokens }: TokensFormProps) => {
           </div>
 
           <div className="field">
-            <label>Toggl Workspace ID:</label>
-            <input
-              type="text"
-              value={tokens.workspaceId}
-              onChange={(e) => handleChange('workspaceId', e.target.value)}
-              placeholder="ID рабочего пространства"
-            />
-          </div>
-
-          <div className="field">
             <label>YouTrack Token:</label>
             <input
               type="password"

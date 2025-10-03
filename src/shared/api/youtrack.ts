@@ -24,10 +24,12 @@ const request = async (endpoint: string, token: string, options: any = {}): Prom
 
 export const youtrackApi = {
   async getWorkItems(token: string, issueId: string, skip: number = 0, pageSize: number = 100): Promise<WorkItem[]> {
-    return request(
+    const response = await request(
       `/issues/${issueId}${TIME_TRACKING_WORK_ITEMS_URL}?fields=id,date,duration(minutes),text,author(id,login,name)&$skip=${skip}&$top=${pageSize}`,
       token
     );
+
+    return Array.isArray(response) ? response : [];
   },
 
   async createWorkItem(token: string, issueId: string, workItem: WorkItem): Promise<void> {
