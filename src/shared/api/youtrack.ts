@@ -8,6 +8,7 @@ const USERS_ME_URL = '/users/me';
 
 const request = async (endpoint: string, token: string, options: any = {}): Promise<any> => {
   const response = await axiosInstance({
+    ...options,
     url: `${BASE_URL}${endpoint}`,
     method: options.method || 'GET',
     data: options.body,
@@ -15,8 +16,7 @@ const request = async (endpoint: string, token: string, options: any = {}): Prom
       'Authorization': `Bearer ${token}`,
       'Accept': 'application/json',
       ...options.headers
-    },
-    ...options
+    }
   });
 
   return response.data;
@@ -34,11 +34,14 @@ export const youtrackApi = {
 
   async createWorkItem(token: string, issueId: string, workItem: WorkItem): Promise<void> {
     await request(
-      `/issues/${issueId}${TIME_TRACKING_WORK_ITEMS_URL}`,
+      `/api/issues/${issueId}/timeTracking/workItems`,
       token,
       {
         method: 'POST',
-        body: JSON.stringify(workItem)
+        body: JSON.stringify(workItem),
+        headers: {
+          'Content-Type': 'application/json'
+        }
       }
     );
   },

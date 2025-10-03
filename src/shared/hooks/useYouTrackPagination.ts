@@ -101,6 +101,7 @@ export const useYouTrackPagination = () => {
 
     setState(prev => ({ ...prev, loading: false, skip, hasMore: false }));
 
+
     return allWorkItems;
   }, []);
 

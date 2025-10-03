@@ -2,11 +2,10 @@ import { TimeEntry, WorkItem } from '../model/types';
 
 export const filterEntriesWithYouTrackId = (entries: TimeEntry[]): TimeEntry[] => {
   if (!Array.isArray(entries)) {
-    console.warn('filterEntriesWithYouTrackId: entries is not an array', entries);
     return [];
   }
   return entries.filter(entry =>
-    entry.description && entry.description.match(/^[A-Z]+-\d+\s*:/)
+    entry.description && entry.description.match(/^(?:#?)([A-Z]+-\d+)/)
   );
 };
 
@@ -139,13 +138,21 @@ export const groupEntriesByIssueWithOriginalIds = (entries: TimeEntry[]): Groupe
 };
 
 export const extractIssueId = (description: string): string | null => {
-  const match = description?.match(/^([A-Z]+-\d+)/);
-  return match ? match[1] : null;
+
+  const match = description?.match(/(?:#?)([A-Z]+-\d+)/);
+  const issueId = match ? match[1] : null;
+
+
+  return issueId;
 };
 
 export const extractDescription = (description: string): string => {
-  const match = description?.match(/^[A-Z]+-\d+\s*:\s*(.+)/);
-  return match ? match[1].trim() : description?.replace(/^[A-Z]+-\d+\s*:\s*/, '').trim() || 'Без описания';
+
+  const match = description?.match(/(?:#?)([A-Z]+-\d+)\s*:?\s*(.+)/);
+  const extractedDescription = match ? match[2].trim() : description?.replace(/^(?:#?)([A-Z]+-\d+)\s*:?\s*/, '').trim() || 'Без описания';
+
+
+  return extractedDescription;
 };
 
 export const isEntryTransferred = (entry: TimeEntry, workItems: WorkItem[], currentUserId?: string): boolean => {

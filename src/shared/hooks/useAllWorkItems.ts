@@ -15,9 +15,13 @@ export const useAllWorkItems = (tokens: any, timeEntries: TimeEntry[], selectedD
     const ids = new Set<string>();
     timeEntries.forEach(entry => {
       const issueId = extractIssueId(entry.description);
-      if (issueId) ids.add(issueId);
+      if (issueId) {
+        ids.add(issueId);
+      } else {
+      }
     });
-    return Array.from(ids);
+    const uniqueIds = Array.from(ids);
+    return uniqueIds;
   }, [timeEntries]);
 
   useEffect(() => {
@@ -30,6 +34,7 @@ export const useAllWorkItems = (tokens: any, timeEntries: TimeEntry[], selectedD
       setLoading(true);
       setError('');
 
+
       try {
         const map: Record<string, WorkItem[]> = {};
 
@@ -38,7 +43,6 @@ export const useAllWorkItems = (tokens: any, timeEntries: TimeEntry[], selectedD
             const workItems = await pagination.searchWorkItems(tokens.youtrackToken, issueId, selectedDate);
             map[issueId] = workItems;
           } catch (err: any) {
-            console.warn(`Не удалось загрузить work items для ${issueId}:`, err);
             map[issueId] = [];
           }
         }
