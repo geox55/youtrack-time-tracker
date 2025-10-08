@@ -34,7 +34,7 @@ export const youtrackApi = {
 
   async createWorkItem(token: string, issueId: string, workItem: WorkItem): Promise<void> {
     await request(
-      `/api/issues/${issueId}/timeTracking/workItems`,
+      `/issues/${issueId}/timeTracking/workItems`,
       token,
       {
         method: 'POST',

@@ -1,8 +1,8 @@
 import { TimeEntry } from '../model/types';
 import { axiosInstance } from './axiosInstance';
 
-const BASE_URL = `https://api.track.toggl.com/api/v9`;
-// const BASE_URL = `/api/toggl`;
+// const BASE_URL = `https://api.track.toggl.com/api/v9`;
+const BASE_URL = `/api/toggl`;
 
 const request = async (endpoint: string, token: string, options: any = {}): Promise<any> => {
   const response = await axiosInstance({
