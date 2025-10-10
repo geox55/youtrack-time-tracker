@@ -6,13 +6,8 @@ interface LayoutProps {
 
 export const Layout = ({ children }: LayoutProps) => {
   return (
-    <>
-      <header className="header">
-        <h1>Toggl ↔ YouTrack Integration</h1>
-      </header>
-      <main className="main">
-        {children}
-      </main>
-    </>
+    <main className="main">
+      {children}
+    </main>
   );
 };
