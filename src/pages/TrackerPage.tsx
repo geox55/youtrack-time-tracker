@@ -11,7 +11,13 @@ import { formatDateRange } from '@/shared/lib';
 export const TrackerPage = () => {
   const queryClient = useQueryClient();
   const { tokens } = useTokens();
-  const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
+
+  const [selectedDate, setSelectedDate] = useState<string>(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const dateFromUrl = urlParams.get('date');
+    return dateFromUrl || new Date().toISOString().split('T')[0];
+  });
+
   const [refreshKey, setRefreshKey] = useState<number>(0);
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
 
@@ -64,6 +70,16 @@ export const TrackerPage = () => {
     return map;
   }, [validationErrors]);
 
+  // Обработчик изменения даты с обновлением URL
+  const handleDateChange = useCallback((newDate: string) => {
+    setSelectedDate(newDate);
+
+    // Обновляем URL с новым параметром даты
+    const url = new URL(window.location.href);
+    url.searchParams.set('date', newDate);
+    window.history.pushState({}, '', url.toString());
+  }, []);
+
   const handleRefresh = useCallback(async () => {
     await queryClient.invalidateQueries({ queryKey: ['toggl-entries'] });
     await queryClient.invalidateQueries({ queryKey: ['youtrack-user'] });
@@ -94,7 +110,7 @@ export const TrackerPage = () => {
         selectedDate={selectedDate}
         dateRange={formatDateRange(selectedDate)}
         transferredEntries={transferredEntries}
-        onDateChange={setSelectedDate}
+        onDateChange={handleDateChange}
         onTransfer={transferToYouTrack}
         onRefresh={handleRefresh}
         validationResults={validationResultsMap}

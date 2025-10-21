@@ -58,3 +58,7 @@ export const formatDate = (dateString: string): string => {
     day: 'numeric'
   });
 };
+
+export const roundToNearest5Minutes = (minutes: number): number => {
+  return Math.round(minutes / 5) * 5;
+};

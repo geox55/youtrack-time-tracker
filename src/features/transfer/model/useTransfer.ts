@@ -1,7 +1,8 @@
 import { useState, useCallback } from 'react';
 import { TimeEntry, Tokens, WorkItem } from '@/shared/model';
-import { extractIssueId, extractDescription, isEntryTransferred, GroupedTimeEntry } from '@/shared/lib';
+import { extractIssueId, extractDescription, isEntryTransferred, GroupedTimeEntry, roundToNearest5Minutes } from '@/shared/lib';
 import { useYouTrackTransfer, useYouTrackUser } from '@/shared/hooks';
+import { togglApi } from '@/shared/api';
 
 export const useTransfer = (tokens: Tokens, timeEntries: TimeEntry[], selectedDate: string, workItemsMap: Record<string, WorkItem[]>, groupedEntries?: GroupedTimeEntry[]) => {
   const [transferredEntries, setTransferredEntries] = useState<Set<number>>(new Set());
@@ -72,7 +73,7 @@ export const useTransfer = (tokens: Tokens, timeEntries: TimeEntry[], selectedDa
       const timestamp = entryDateObj.getTime();
 
       const workItem = {
-        duration: { minutes: Math.round(entry.duration / 60) },
+        duration: { minutes: roundToNearest5Minutes(entry.duration / 60) },
         text: description,
         date: timestamp
       };
@@ -82,6 +83,14 @@ export const useTransfer = (tokens: Tokens, timeEntries: TimeEntry[], selectedDa
         issueId,
         workItem,
       });
+
+      // Добавляем тег "youtrack" в Toggl после успешного переноса
+      try {
+        await togglApi.updateTimeEntry(tokens.togglToken, entry.id, ['youtrack']);
+      } catch (tagError) {
+        console.warn('Failed to add youtrack tag to Toggl entry:', tagError);
+        // Не прерываем процесс, если не удалось добавить тег
+      }
 
       // Если это группированный трекинг, помечаем все оригинальные ID как перенесенные
       if (groupedEntries) {

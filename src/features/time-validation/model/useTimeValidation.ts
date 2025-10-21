@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { TimeEntry, WorkItem, Tokens } from '@/shared/model';
-import { extractIssueId } from '@/shared/lib';
+import { extractIssueId, roundToNearest5Minutes } from '@/shared/lib';
 import { TimeValidationResult, ValidationError } from '../types';
 
 export const useTimeValidation = (
@@ -40,7 +40,7 @@ export const useTimeValidation = (
         item.author?.id === currentUserId
       );
 
-      const togglDurationMinutes = Math.round(entry.duration / 60);
+      const togglDurationMinutes = roundToNearest5Minutes(entry.duration / 60);
       const youtrackDurationMinutes = userWorkItems.reduce((sum, item) =>
         sum + (item.duration?.minutes || 0), 0
       );
@@ -48,7 +48,7 @@ export const useTimeValidation = (
       const durationDiff = Math.abs(togglDurationMinutes - youtrackDurationMinutes);
 
       const hasYouTrackTime = youtrackDurationMinutes > 0;
-      const isValid = !hasYouTrackTime || durationDiff <= 2;
+      const isValid = !hasYouTrackTime || durationDiff <= 5;
 
       if (!hasYouTrackTime) {
         continue;

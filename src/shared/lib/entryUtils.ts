@@ -83,11 +83,12 @@ export interface GroupedTimeEntry extends TimeEntry {
 export const groupEntriesByIssueWithOriginalIds = (entries: TimeEntry[]): GroupedTimeEntry[] => {
   const groupedMap = new Map<string, TimeEntry[]>();
 
-  // Группируем трекинги по issue ID + дате
+  // Группируем трекинги по issue ID + полное описание + дате
   entries.forEach(entry => {
     const issueId = extractIssueId(entry.description);
     const entryDate = entry.start.split('T')[0];
-    const groupKey = `${issueId}-${entryDate}`; // Ключ: issueId-дата
+    const description = extractDescription(entry.description);
+    const groupKey = `${issueId}-${description}-${entryDate}`; // Ключ: issueId-описание-дата
 
     if (issueId) {
       if (!groupedMap.has(groupKey)) {

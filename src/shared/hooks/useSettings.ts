@@ -2,10 +2,12 @@ import { useState, useEffect } from 'react';
 
 interface AppSettings {
   groupTogglTracks: boolean;
+  youtrackBaseUrl: string;
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
   groupTogglTracks: true, // По умолчанию группировка включена
+  youtrackBaseUrl: '', // По умолчанию пустой URL
 };
 
 const STORAGE_KEY = 'time-tracker-settings';

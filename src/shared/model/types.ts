@@ -9,6 +9,7 @@ export interface TimeEntry {
   start: string;
   stop: string | null;
   duration: number;
+  tags?: string[];
 }
 
 export interface WorkItem {

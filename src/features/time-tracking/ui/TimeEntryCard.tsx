@@ -2,6 +2,7 @@ import { memo, useState } from 'react';
 import { TimeEntryCardProps } from '../types';
 import { extractIssueId, extractDescription } from '@/shared/lib';
 import { ValidationIndicator, ValidationDetails } from '../../time-validation';
+import { useSettings } from '@/shared/hooks';
 
 export const TimeEntryCard = memo(({
   entry,
@@ -13,6 +14,7 @@ export const TimeEntryCard = memo(({
   validationError
 }: TimeEntryCardProps) => {
   const [showValidationDetails, setShowValidationDetails] = useState(false);
+  const { settings } = useSettings();
   const issueId = extractIssueId(entry.description) || 'Неизвестная задача';
   const description = extractDescription(entry.description);
 
@@ -21,7 +23,18 @@ export const TimeEntryCard = memo(({
   return (
     <div className={`time-entry-card ${isTransferred ? 'transferred' : ''} ${hasValidationError ? 'validation-error' : ''}`}>
       <div className="entry-header">
-        <span className="entry-issue-id">{issueId}</span>
+        {settings.youtrackBaseUrl && issueId !== 'Неизвестная задача' ? (
+          <a
+            href={`${settings.youtrackBaseUrl}/issue/${issueId}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="entry-issue-id-link"
+          >
+            {issueId}
+          </a>
+        ) : (
+          <span className="entry-issue-id">{issueId}</span>
+        )}
         <span className="entry-duration">{formatDuration(entry.duration)}</span>
         <ValidationIndicator
           validationResult={validationResult}
