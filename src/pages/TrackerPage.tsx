@@ -18,18 +18,15 @@ export const TrackerPage = () => {
     return dateFromUrl || new Date().toISOString().split('T')[0];
   });
 
-  const [refreshKey, setRefreshKey] = useState<number>(0);
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
 
   const { settings } = useSettings();
 
-  // Проверяем, заполнены ли токены и workspace ID для индикации ошибки
   const isApiConfigured = tokens.togglToken && tokens.youtrackToken && settings.togglWorkspaceId;
 
-  console.log('TrackerPage: settings.groupTogglTracks =', settings.groupTogglTracks);
 
   const { timeEntries, groupedEntries, loading, error: timeEntriesError, loadTimeEntries } = useTimeEntries(tokens, selectedDate, settings.groupTogglTracks);
-  const { workItemsMap, loading: workItemsLoading, error: workItemsError } = useAllWorkItems(tokens, timeEntries, selectedDate, refreshKey);
+  const { workItemsMap, loading: workItemsLoading, error: workItemsError } = useAllWorkItems(tokens, timeEntries, selectedDate);
   const {
     transferredEntries,
     error: transferError,
@@ -47,7 +44,6 @@ export const TrackerPage = () => {
 
   const error = timeEntriesError || workItemsError || transferError;
 
-  // Проверка существующих записей после загрузки трекингов
   useEffect(() => {
     if (timeEntries.length > 0) {
       checkExistingEntries();
@@ -70,11 +66,9 @@ export const TrackerPage = () => {
     return map;
   }, [validationErrors]);
 
-  // Обработчик изменения даты с обновлением URL
   const handleDateChange = useCallback((newDate: string) => {
     setSelectedDate(newDate);
 
-    // Обновляем URL с новым параметром даты
     const url = new URL(window.location.href);
     url.searchParams.set('date', newDate);
     window.history.pushState({}, '', url.toString());
@@ -84,7 +78,6 @@ export const TrackerPage = () => {
     await queryClient.invalidateQueries({ queryKey: ['toggl-entries'] });
     await queryClient.invalidateQueries({ queryKey: ['youtrack-user'] });
 
-    setRefreshKey(prev => prev + 1);
 
     await loadTimeEntries();
   }, [queryClient, loadTimeEntries]);

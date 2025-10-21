@@ -1,9 +1,8 @@
 import { WorkItem } from '../model/types';
 import { axiosInstance } from './axiosInstance';
 
-// const BASE_URL = `https://youtrack.infra.gbooking.ru`;
 const BASE_URL = `/api/youtrack`;
-const TIME_TRACKING_WORK_ITEMS_URL = '/timeTracking/workItems';
+const TIME_TRACKING_WORK_ITEMS_URL = 'timeTracking/workItems';
 const USERS_ME_URL = '/users/me';
 
 const request = async (endpoint: string, token: string, options: any = {}): Promise<any> => {
@@ -25,7 +24,7 @@ const request = async (endpoint: string, token: string, options: any = {}): Prom
 export const youtrackApi = {
   async getWorkItems(token: string, issueId: string, skip: number = 0, pageSize: number = 100): Promise<WorkItem[]> {
     const response = await request(
-      `/issues/${issueId}${TIME_TRACKING_WORK_ITEMS_URL}?fields=id,date,duration(minutes),text,author(id,login,name)&$skip=${skip}&$top=${pageSize}`,
+      `/issues/${issueId}/${TIME_TRACKING_WORK_ITEMS_URL}?fields=id,date,duration(minutes),text,author(id,login,name)&$skip=${skip}&$top=${pageSize}`,
       token
     );
 
@@ -34,7 +33,7 @@ export const youtrackApi = {
 
   async createWorkItem(token: string, issueId: string, workItem: WorkItem): Promise<void> {
     await request(
-      `/issues/${issueId}/timeTracking/workItems`,
+      `/issues/${issueId}/${TIME_TRACKING_WORK_ITEMS_URL}`,
       token,
       {
         method: 'POST',

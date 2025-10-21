@@ -21,9 +21,6 @@ export const useYouTrackTransfer = () => {
       queryClient.invalidateQueries({
         queryKey: ['youtrack-work-items', issueId],
       });
-      queryClient.invalidateQueries({
-        queryKey: ['toggl-entries'],
-      });
     },
   });
 };

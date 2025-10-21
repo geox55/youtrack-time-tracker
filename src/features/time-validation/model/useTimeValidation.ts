@@ -13,7 +13,7 @@ export const useTimeValidation = (
   const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
 
-  const validateTimeEntries = useCallback(async () => {
+  const validateTimeEntries = async () => {
     if (!tokens.youtrackToken || !currentUserId) {
       return;
     }
@@ -85,13 +85,13 @@ export const useTimeValidation = (
     setValidationResults(results);
     setValidationErrors(errors);
     setLoading(false);
-  }, [tokens.youtrackToken, timeEntries, workItemsMap, currentUserId]);
+  };
 
   useEffect(() => {
     if (timeEntries.length > 0 && workItemsMap && currentUserId) {
       validateTimeEntries();
     }
-  }, [validateTimeEntries]);
+  }, [timeEntries, workItemsMap, currentUserId]);
 
   const getValidationResult = (entryId: number): TimeValidationResult | undefined => {
     return validationResults.find(result => result.entryId === entryId);
