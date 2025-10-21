@@ -1,19 +1,28 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { TokensForm, useTokens } from '@/features/auth';
+import { useTokens } from '@/features/auth';
 import { TimeEntriesList, useTimeEntries } from '@/features/time-tracking';
 import { useTransfer } from '@/features/transfer';
 import { useTimeValidation } from '@/features/time-validation';
-import { useAllWorkItems, useYouTrackUser } from '@/shared/hooks';
+import { SettingsModal } from '@/features/settings';
+import { useAllWorkItems, useYouTrackUser, useSettings } from '@/shared/hooks';
 import { formatDateRange } from '@/shared/lib';
 
 export const TrackerPage = () => {
   const queryClient = useQueryClient();
-  const { tokens, setTokens } = useTokens();
+  const { tokens } = useTokens();
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [refreshKey, setRefreshKey] = useState<number>(0);
+  const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
 
-  const { timeEntries, groupedEntries, loading, error: timeEntriesError, loadTimeEntries } = useTimeEntries(tokens, selectedDate);
+  const { settings } = useSettings();
+
+  // Проверяем, заполнены ли токены для индикации ошибки
+  const isApiConfigured = tokens.togglToken && tokens.youtrackToken;
+
+  console.log('TrackerPage: settings.groupTogglTracks =', settings.groupTogglTracks);
+
+  const { timeEntries, groupedEntries, loading, error: timeEntriesError, loadTimeEntries } = useTimeEntries(tokens, selectedDate, settings.groupTogglTracks);
   const { workItemsMap, loading: workItemsLoading, error: workItemsError } = useAllWorkItems(tokens, timeEntries, selectedDate, refreshKey);
   const {
     transferredEntries,
@@ -66,7 +75,16 @@ export const TrackerPage = () => {
 
   return (
     <>
-      <TokensForm tokens={tokens} setTokens={setTokens} />
+      <div className="page-header">
+        <h1>Toggl ↔ YouTrack Integration</h1>
+        <button
+          className={`settings-button ${!isApiConfigured ? 'error' : ''}`}
+          onClick={() => setIsSettingsOpen(true)}
+        >
+          ⚙️ Настройки
+          {!isApiConfigured && <span className="settings-error-indicator">⚠️</span>}
+        </button>
+      </div>
 
       {error && <div className="error">{error}</div>}
 
@@ -81,6 +99,11 @@ export const TrackerPage = () => {
         onRefresh={handleRefresh}
         validationResults={validationResultsMap}
         validationErrors={validationErrorsMap}
+      />
+
+      <SettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
       />
     </>
   );

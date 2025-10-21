@@ -10,7 +10,10 @@ export const useTogglEntries = (tokens: Tokens, selectedDate: string) => {
       if (!tokens.togglToken) return [];
 
       const { startDate, endDate } = getWeekRange(selectedDate);
-      return togglApi.getTimeEntries(tokens.togglToken, startDate, endDate);
+
+      const entries = await togglApi.getTimeEntries(tokens.togglToken, startDate, endDate);
+
+      return entries;
     },
     enabled: !!tokens.togglToken,
     staleTime: 2 * 60 * 1000,

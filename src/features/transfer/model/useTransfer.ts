@@ -43,7 +43,6 @@ export const useTransfer = (tokens: Tokens, timeEntries: TimeEntry[], selectedDa
 
       setTransferredEntries(transferred);
     } catch (err: any) {
-      console.error('Ошибка проверки существующих записей:', err);
     }
   }, [tokens.youtrackToken, timeEntries, selectedDate, workItemsMap, currentUser?.id, groupedEntries]);
 

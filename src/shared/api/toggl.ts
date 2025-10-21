@@ -7,8 +7,6 @@ const BASE_URL = `/api/toggl`;
 const request = async (endpoint: string, token: string, options: any = {}): Promise<any> => {
   const response = await axiosInstance({
     url: `${BASE_URL}${endpoint}`,
-    method: options.method || 'GET',
-    data: options.body,
     headers: {
       'Authorization': `Basic ${btoa(token + ':api_token')}`,
       ...options.headers

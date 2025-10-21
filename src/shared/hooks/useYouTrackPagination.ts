@@ -51,17 +51,20 @@ export const useYouTrackPagination = () => {
 
       const response = await youtrackApi.getWorkItems(token, issueId, skip);
 
-      if (!response || response.length === 0) {
+      // Проверяем, что response является массивом
+      if (!response || !Array.isArray(response) || response.length === 0) {
         const previousSkip = Math.max(0, skip - pageSize);
         skipCache[issueId] = previousSkip;
         localStorage.setItem('youtrack_skips', JSON.stringify(skipCache));
         break;
       }
 
-      const relevantInPage = response.filter((item: WorkItem) => {
-        const itemDate = new Date(item.date);
-        return itemDate >= startOfWeek && itemDate <= endOfWeek;
-      });
+      const relevantInPage = Array.isArray(response)
+        ? response.filter((item: WorkItem) => {
+          const itemDate = new Date(item.date);
+          return itemDate >= startOfWeek && itemDate <= endOfWeek;
+        })
+        : [];
 
       if (relevantInPage.length > 0) {
         allWorkItems.push(...relevantInPage);
@@ -69,7 +72,14 @@ export const useYouTrackPagination = () => {
         localStorage.setItem('youtrack_skips', JSON.stringify(skipCache));
         skip += pageSize;
       } else {
-        const dates = response.map((item: WorkItem) => new Date(item.date).getTime());
+        const dates = Array.isArray(response)
+          ? response.map((item: WorkItem) => new Date(item.date).getTime())
+          : [];
+
+        if (dates.length === 0) {
+          break;
+        }
+
         const oldestInPage = Math.min(...dates);
         const newestInPage = Math.max(...dates);
         const weekStart = startOfWeek.getTime();
@@ -90,6 +100,7 @@ export const useYouTrackPagination = () => {
     }
 
     setState(prev => ({ ...prev, loading: false, skip, hasMore: false }));
+
 
     return allWorkItems;
   }, []);
