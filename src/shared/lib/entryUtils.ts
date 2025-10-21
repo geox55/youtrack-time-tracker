@@ -156,38 +156,35 @@ export const extractDescription = (description: string): string => {
   return extractedDescription;
 };
 
-export const isEntryTransferred = (entry: TimeEntry, workItems: WorkItem[], currentUserId?: string): boolean => {
+export const isEntryTransferred = (entry: TimeEntry, workItemsMap: Record<string, Record<string, WorkItem[]>>, currentUserId?: string): boolean => {
   const issueId = extractIssueId(entry.description);
   if (!issueId) return false;
 
   const entryDate = entry.start.split('T')[0];
   const entryDurationMinutes = Math.round(entry.duration / 60);
+  const entryDescription = extractDescription(entry.description);
 
-  const entryDateObj = new Date(entryDate);
+  // Получаем WorkItems для этой задачи
+  const issueWorkItems = workItemsMap[issueId] || {};
 
-  // Фильтруем WorkItems по пользователю, если указан currentUserId
-  let relevantItems = workItems.filter(item => {
-    const itemDate = new Date(item.date);
-    const dateDiff = Math.abs(itemDate.getTime() - entryDateObj.getTime());
-    return dateDiff <= 7 * 24 * 60 * 60 * 1000;
-  });
+  // Ищем группу с совпадающим описанием и датой
+  const groupKey = `${entryDescription}-${entryDate}`;
+  const matchingGroup = issueWorkItems[groupKey] || [];
 
-  // Если указан currentUserId, фильтруем только WorkItems текущего пользователя
+  // Фильтруем по пользователю, если указан currentUserId
+  let relevantItems = matchingGroup;
   if (currentUserId) {
-    relevantItems = relevantItems.filter(item =>
+    relevantItems = matchingGroup.filter(item =>
       item.author?.id === currentUserId
     );
   }
 
-  return relevantItems.some(item => {
-    const itemDate = new Date(item.date);
+  // Проверяем совпадение длительности
+  const totalDuration = relevantItems.reduce((sum, item) =>
+    sum + (item.duration?.minutes || 0), 0
+  );
 
-    const itemDateOnly = new Date(itemDate.getFullYear(), itemDate.getMonth(), itemDate.getDate());
-    const entryDateOnly = new Date(entryDateObj.getFullYear(), entryDateObj.getMonth(), entryDateObj.getDate());
-    const isSameDate = itemDateOnly.getTime() === entryDateOnly.getTime();
+  const isSameDuration = Math.abs(totalDuration - entryDurationMinutes) <= 2;
 
-    const isSameDuration = Math.abs((item.duration?.minutes || 0) - entryDurationMinutes) <= 2;
-
-    return isSameDate && isSameDuration;
-  });
+  return relevantItems.length > 0 && isSameDuration;
 };

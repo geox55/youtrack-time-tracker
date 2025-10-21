@@ -16,9 +16,14 @@ export const ValidationIndicator = memo(({
     return null;
   }
 
+  // Не показываем индикатор, если в YouTrack нет времени
+  const hasYouTrackTime = validationResult && validationResult.youtrackDurationMinutes > 0;
+  if (!hasYouTrackTime && !validationError) {
+    return null;
+  }
+
   const severity = validationError?.severity || (validationResult && !validationResult.isValid ? 'error' : undefined);
 
-  const hasYouTrackTime = validationResult && validationResult.youtrackDurationMinutes > 0;
   const isValidWithTime = validationResult && validationResult.isValid && hasYouTrackTime;
 
   if (isValidWithTime) {

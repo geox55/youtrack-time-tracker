@@ -12,8 +12,8 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
   const { tokens, setTokens } = useTokens();
   const { settings, updateSetting } = useSettings();
 
-  // Проверяем, заполнены ли токены
-  const isApiConfigured = tokens.togglToken && tokens.youtrackToken;
+  // Проверяем, заполнены ли токены и workspace ID
+  const isApiConfigured = tokens.togglToken && tokens.youtrackToken && settings.togglWorkspaceId;
 
   if (!isOpen) return null;
 
@@ -57,6 +57,26 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
                   Введите токены для подключения к Toggl и YouTrack
                 </p>
                 <TokensFormInline tokens={tokens} setTokens={setTokens} />
+
+                <h4 style={{ marginTop: '1.5rem', marginBottom: '0.5rem', color: '#333' }}>Дополнительные настройки</h4>
+                <div className="setting-item">
+                  <label className="setting-label">
+                    <span className="setting-text">Toggl Workspace ID: <span style={{ color: '#dc3545' }}>*</span></span>
+                    <input
+                      type="text"
+                      value={settings.togglWorkspaceId}
+                      onChange={(e) => updateSetting('togglWorkspaceId', e.target.value)}
+                      placeholder="1234567"
+                      className="setting-input"
+                      required
+                    />
+                  </label>
+                  <div className="setting-description">
+                    <strong>Обязательное поле.</strong> ID рабочего пространства Toggl для обновления тегов.
+                    <br />
+                    <strong>Где найти:</strong> Toggl → Settings → Profile → Workspace ID (в URL или в настройках)
+                  </div>
+                </div>
               </div>
             )}
 

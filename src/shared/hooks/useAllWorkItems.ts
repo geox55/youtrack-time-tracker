@@ -4,7 +4,7 @@ import { useYouTrackPagination } from './useYouTrackPagination';
 import { extractIssueId } from '@/shared/lib';
 
 export const useAllWorkItems = (tokens: any, timeEntries: TimeEntry[], selectedDate: string, refreshKey?: number) => {
-  const [workItemsMap, setWorkItemsMap] = useState<Record<string, WorkItem[]>>({});
+  const [workItemsMap, setWorkItemsMap] = useState<Record<string, Record<string, WorkItem[]>>>({});
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
 
@@ -36,14 +36,28 @@ export const useAllWorkItems = (tokens: any, timeEntries: TimeEntry[], selectedD
 
 
       try {
-        const map: Record<string, WorkItem[]> = {};
+        const map: Record<string, Record<string, WorkItem[]>> = {};
 
         for (const issueId of issueIds) {
           try {
             const workItems = await pagination.searchWorkItems(tokens.youtrackToken, issueId, selectedDate);
-            map[issueId] = workItems;
+
+            // Группируем WorkItems по text + date
+            const groupedWorkItems: Record<string, WorkItem[]> = {};
+            workItems.forEach(item => {
+              const itemDate = new Date(item.date);
+              const dateKey = itemDate.toISOString().split('T')[0];
+              const groupKey = `${item.text}-${dateKey}`;
+
+              if (!groupedWorkItems[groupKey]) {
+                groupedWorkItems[groupKey] = [];
+              }
+              groupedWorkItems[groupKey].push(item);
+            });
+
+            map[issueId] = groupedWorkItems;
           } catch (err: any) {
-            map[issueId] = [];
+            map[issueId] = {};
           }
         }
 

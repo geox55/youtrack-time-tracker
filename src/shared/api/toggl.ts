@@ -24,8 +24,8 @@ export const togglApi = {
     );
   },
 
-  async updateTimeEntry(token: string, entryId: number, tags: string[]): Promise<void> {
-    await request(`/me/time_entries/${entryId}`, token, {
+  async updateTimeEntry(token: string, workspaceId: string, entryId: number, tags: string[]): Promise<void> {
+    await request(`/workspaces/${workspaceId}/time_entries/${entryId}`, token, {
       method: 'PUT',
       data: { tags }
     });

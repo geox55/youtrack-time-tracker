@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { TimeEntry, WorkItem, Tokens } from '@/shared/model';
-import { extractIssueId, roundToNearest5Minutes } from '@/shared/lib';
+import { extractIssueId, extractDescription, roundToNearest5Minutes } from '@/shared/lib';
 import { TimeValidationResult, ValidationError } from '../types';
 
 export const useTimeValidation = (
   tokens: Tokens,
   timeEntries: TimeEntry[],
-  workItemsMap: Record<string, WorkItem[]>,
+  workItemsMap: Record<string, Record<string, WorkItem[]>>,
   currentUserId?: string
 ) => {
   const [validationResults, setValidationResults] = useState<TimeValidationResult[]>([]);
@@ -26,17 +26,14 @@ export const useTimeValidation = (
       const issueId = extractIssueId(entry.description);
       if (!issueId) continue;
 
-      const workItems = workItemsMap[issueId] || [];
-      const entryDate = new Date(entry.start);
-      const entryDateOnly = new Date(entryDate.getFullYear(), entryDate.getMonth(), entryDate.getDate());
+      const entryDate = entry.start.split('T')[0];
+      const entryDescription = extractDescription(entry.description);
+      const groupKey = `${entryDescription}-${entryDate}`;
 
-      const relevantWorkItems = workItems.filter(item => {
-        const itemDate = new Date(item.date);
-        const itemDateOnly = new Date(itemDate.getFullYear(), itemDate.getMonth(), itemDate.getDate());
-        return itemDateOnly.getTime() === entryDateOnly.getTime();
-      });
+      const issueWorkItems = workItemsMap[issueId] || {};
+      const matchingGroup = issueWorkItems[groupKey] || [];
 
-      const userWorkItems = relevantWorkItems.filter(item =>
+      const userWorkItems = matchingGroup.filter(item =>
         item.author?.id === currentUserId
       );
 
@@ -50,9 +47,7 @@ export const useTimeValidation = (
       const hasYouTrackTime = youtrackDurationMinutes > 0;
       const isValid = !hasYouTrackTime || durationDiff <= 5;
 
-      if (!hasYouTrackTime) {
-        continue;
-      }
+      // Показываем результат валидации всегда, даже если нет времени в YouTrack
 
       const result: TimeValidationResult = {
         entryId: entry.id,
@@ -73,7 +68,7 @@ export const useTimeValidation = (
 
       // Показываем ошибку только если время не совпадает
       if (!isValid) {
-        const errorMessage = `Время не сходится за ${entryDateOnly.toLocaleDateString()}: Toggl ${togglDurationMinutes}м, YouTrack ${youtrackDurationMinutes}м`;
+        const errorMessage = `Время не сходится за ${entryDate}: Toggl ${togglDurationMinutes}м, YouTrack ${youtrackDurationMinutes}м`;
         result.errorMessage = errorMessage;
 
         errors.push({

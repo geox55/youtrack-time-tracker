@@ -1,15 +1,16 @@
 import { useState, useCallback } from 'react';
 import { TimeEntry, Tokens, WorkItem } from '@/shared/model';
 import { extractIssueId, extractDescription, isEntryTransferred, GroupedTimeEntry, roundToNearest5Minutes } from '@/shared/lib';
-import { useYouTrackTransfer, useYouTrackUser } from '@/shared/hooks';
+import { useYouTrackTransfer, useYouTrackUser, useSettings } from '@/shared/hooks';
 import { togglApi } from '@/shared/api';
 
-export const useTransfer = (tokens: Tokens, timeEntries: TimeEntry[], selectedDate: string, workItemsMap: Record<string, WorkItem[]>, groupedEntries?: GroupedTimeEntry[]) => {
+export const useTransfer = (tokens: Tokens, timeEntries: TimeEntry[], selectedDate: string, workItemsMap: Record<string, Record<string, WorkItem[]>>, groupedEntries?: GroupedTimeEntry[]) => {
   const [transferredEntries, setTransferredEntries] = useState<Set<number>>(new Set());
   const [error, setError] = useState<string>('');
 
   const transferMutation = useYouTrackTransfer();
   const { data: currentUser } = useYouTrackUser(tokens.youtrackToken);
+  const { settings } = useSettings();
 
   const checkExistingEntries = useCallback(async (): Promise<void> => {
     if (!tokens.youtrackToken) return;
@@ -23,8 +24,7 @@ export const useTransfer = (tokens: Tokens, timeEntries: TimeEntry[], selectedDa
           const issueId = extractIssueId(groupedEntry.description);
           if (!issueId) continue;
 
-          const workItems = workItemsMap[issueId] || [];
-          if (isEntryTransferred(groupedEntry, workItems, currentUser?.id)) {
+          if (isEntryTransferred(groupedEntry, workItemsMap, currentUser?.id)) {
             // Помечаем все оригинальные ID как перенесенные
             groupedEntry.originalIds.forEach(id => transferred.add(id));
           }
@@ -35,8 +35,7 @@ export const useTransfer = (tokens: Tokens, timeEntries: TimeEntry[], selectedDa
           const issueId = extractIssueId(entry.description);
           if (!issueId) continue;
 
-          const workItems = workItemsMap[issueId] || [];
-          if (isEntryTransferred(entry, workItems, currentUser?.id)) {
+          if (isEntryTransferred(entry, workItemsMap, currentUser?.id)) {
             transferred.add(entry.id);
           }
         }
@@ -60,9 +59,7 @@ export const useTransfer = (tokens: Tokens, timeEntries: TimeEntry[], selectedDa
     }
 
     try {
-      const workItems = workItemsMap[issueId] || [];
-
-      if (isEntryTransferred(entry, workItems, currentUser?.id)) {
+      if (isEntryTransferred(entry, workItemsMap, currentUser?.id)) {
         setError('Этот трекинг уже перенесен в YouTrack');
         return;
       }
@@ -86,7 +83,9 @@ export const useTransfer = (tokens: Tokens, timeEntries: TimeEntry[], selectedDa
 
       // Добавляем тег "youtrack" в Toggl после успешного переноса
       try {
-        await togglApi.updateTimeEntry(tokens.togglToken, entry.id, ['youtrack']);
+        if (settings.togglWorkspaceId) {
+          await togglApi.updateTimeEntry(tokens.togglToken, settings.togglWorkspaceId, entry.id, ['youtrack']);
+        }
       } catch (tagError) {
         console.warn('Failed to add youtrack tag to Toggl entry:', tagError);
         // Не прерываем процесс, если не удалось добавить тег

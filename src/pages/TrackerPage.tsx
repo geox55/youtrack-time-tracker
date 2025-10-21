@@ -23,8 +23,8 @@ export const TrackerPage = () => {
 
   const { settings } = useSettings();
 
-  // Проверяем, заполнены ли токены для индикации ошибки
-  const isApiConfigured = tokens.togglToken && tokens.youtrackToken;
+  // Проверяем, заполнены ли токены и workspace ID для индикации ошибки
+  const isApiConfigured = tokens.togglToken && tokens.youtrackToken && settings.togglWorkspaceId;
 
   console.log('TrackerPage: settings.groupTogglTracks =', settings.groupTogglTracks);
 
