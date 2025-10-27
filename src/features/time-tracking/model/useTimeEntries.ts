@@ -5,17 +5,17 @@ import { filterEntriesWithYouTrackId, sortEntriesByDate, groupEntriesByIssueWith
 
 interface UseTimeEntriesProps {
   tokens: Tokens;
-  selectedDate: string;
+  startOfWeek: Date;
   groupTracks: boolean;
 }
 
-export const useTimeEntries = (tokens: Tokens, selectedDate: string, groupTracks: boolean = true) => {
+export const useTimeEntries = (tokens: Tokens, startOfWeek: Date, groupTracks: boolean = true) => {
   const [timeEntries, setTimeEntries] = useState<TimeEntry[]>([]);
   const [groupedEntries, setGroupedEntries] = useState<GroupedTimeEntry[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
 
-  const { data: rawEntries = [], isLoading, error: queryError, refetch } = useTogglEntries(tokens, selectedDate);
+  const { data: rawEntries = [], isLoading, error: queryError, refetch } = useTogglEntries(tokens, startOfWeek);
 
   const loadTimeEntries = useCallback(async () => {
     setLoading(true);

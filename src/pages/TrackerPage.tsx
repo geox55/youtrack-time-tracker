@@ -6,16 +6,22 @@ import { useTransfer } from '@/features/transfer';
 import { useTimeValidation } from '@/features/time-validation';
 import { SettingsModal } from '@/features/settings';
 import { useAllWorkItems, useYouTrackUser, useSettings } from '@/shared/hooks';
-import { formatDateRange } from '@/shared/lib';
+import { formatDateRange, createDateAtStartOfWeek, dateToString } from '@/shared/lib';
 
 export const TrackerPage = () => {
   const queryClient = useQueryClient();
   const { tokens } = useTokens();
 
-  const [selectedDate, setSelectedDate] = useState<string>(() => {
+  const [startOfWeek, setStartOfWeek] = useState<Date>(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const dateFromUrl = urlParams.get('date');
-    return dateFromUrl || new Date().toISOString().split('T')[0];
+    const baseDate = dateFromUrl ? new Date(dateFromUrl) : new Date();
+
+    const startOfWeek = new Date(baseDate);
+    startOfWeek.setDate(baseDate.getDate() - baseDate.getDay() + 1);
+    startOfWeek.setHours(0, 0, 0, 0);
+
+    return startOfWeek;
   });
 
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
@@ -25,16 +31,16 @@ export const TrackerPage = () => {
   const isApiConfigured = tokens.togglToken && tokens.youtrackToken && settings.togglWorkspaceId;
 
 
-  const { timeEntries, groupedEntries, loading, error: timeEntriesError, loadTimeEntries } = useTimeEntries(tokens, selectedDate, settings.groupTogglTracks);
-  const { workItemsMap, loading: workItemsLoading, error: workItemsError } = useAllWorkItems(tokens, timeEntries, selectedDate);
+  const { data: currentUser } = useYouTrackUser(tokens.youtrackToken);
+
+  const { timeEntries, groupedEntries, loading, error: timeEntriesError, loadTimeEntries } = useTimeEntries(tokens, startOfWeek, settings.groupTogglTracks);
+  const { workItemsMap, loading: workItemsLoading, error: workItemsError } = useAllWorkItems(tokens, timeEntries, startOfWeek, currentUser?.id);
   const {
     transferredEntries,
     error: transferError,
     transferToYouTrack,
     checkExistingEntries
-  } = useTransfer(tokens, timeEntries, selectedDate, workItemsMap, groupedEntries);
-
-  const { data: currentUser } = useYouTrackUser(tokens.youtrackToken);
+  } = useTransfer(tokens, timeEntries, startOfWeek, workItemsMap, groupedEntries);
 
   const {
     validationResults,
@@ -67,10 +73,11 @@ export const TrackerPage = () => {
   }, [validationErrors]);
 
   const handleDateChange = useCallback((newDate: string) => {
-    setSelectedDate(newDate);
+    const newStartOfWeek = createDateAtStartOfWeek(newDate);
+    setStartOfWeek(newStartOfWeek);
 
     const url = new URL(window.location.href);
-    url.searchParams.set('date', newDate);
+    url.searchParams.set('date', dateToString(newStartOfWeek));
     window.history.pushState({}, '', url.toString());
   }, []);
 
@@ -100,8 +107,8 @@ export const TrackerPage = () => {
       <TimeEntriesList
         timeEntries={timeEntries}
         loading={loading || workItemsLoading || validationLoading}
-        selectedDate={selectedDate}
-        dateRange={formatDateRange(selectedDate)}
+        selectedDate={startOfWeek}
+        dateRange={formatDateRange(startOfWeek)}
         transferredEntries={transferredEntries}
         onDateChange={handleDateChange}
         onTransfer={transferToYouTrack}

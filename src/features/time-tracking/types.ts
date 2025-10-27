@@ -4,7 +4,7 @@ import { TimeValidationResult, ValidationError } from '../time-validation';
 export interface TimeEntriesListProps {
   timeEntries: TimeEntry[];
   loading: boolean;
-  selectedDate: string;
+  selectedDate: Date;
   dateRange: string;
   transferredEntries: Set<number>;
   onDateChange: (date: string) => void;

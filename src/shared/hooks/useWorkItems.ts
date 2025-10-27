@@ -5,12 +5,8 @@ import { WorkItem } from '@/shared/model';
 const searchWorkItems = async (
   token: string,
   issueId: string,
-  selectedDate: string
+  startOfWeek: Date
 ): Promise<WorkItem[]> => {
-  const selectedDateObj = new Date(selectedDate);
-  const startOfWeek = new Date(selectedDateObj);
-  startOfWeek.setDate(selectedDateObj.getDate() - selectedDateObj.getDay());
-  startOfWeek.setHours(0, 0, 0, 0);
 
   const endOfWeek = new Date(startOfWeek);
   endOfWeek.setDate(startOfWeek.getDate() + 6);
@@ -44,11 +40,11 @@ const searchWorkItems = async (
   return allWorkItems;
 };
 
-export const useWorkItems = (token: string, issueId: string, selectedDate: string) => {
+export const useWorkItems = (token: string, issueId: string, startOfWeek: Date) => {
   return useQuery({
-    queryKey: ['youtrack-work-items', issueId, selectedDate],
+    queryKey: ['youtrack-work-items', issueId, startOfWeek.getTime()],
     queryFn: async () => {
-      const workItems = await searchWorkItems(token, issueId, selectedDate);
+      const workItems = await searchWorkItems(token, issueId, startOfWeek);
 
       // Группируем по text + date
       const grouped: Record<string, WorkItem[]> = {};

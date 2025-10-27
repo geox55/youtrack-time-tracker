@@ -4,7 +4,7 @@ import { extractIssueId, extractDescription, isEntryTransferred, GroupedTimeEntr
 import { useYouTrackTransfer, useYouTrackUser, useSettings } from '@/shared/hooks';
 import { togglApi } from '@/shared/api';
 
-export const useTransfer = (tokens: Tokens, timeEntries: TimeEntry[], selectedDate: string, workItemsMap: Record<string, Record<string, WorkItem[]>>, groupedEntries?: GroupedTimeEntry[]) => {
+export const useTransfer = (tokens: Tokens, timeEntries: TimeEntry[], startOfWeek: Date, workItemsMap: Record<string, Record<string, WorkItem[]>>, groupedEntries?: GroupedTimeEntry[]) => {
   const [transferredEntries, setTransferredEntries] = useState<Set<number>>(new Set());
   const [error, setError] = useState<string>('');
 
@@ -44,7 +44,7 @@ export const useTransfer = (tokens: Tokens, timeEntries: TimeEntry[], selectedDa
       setTransferredEntries(transferred);
     } catch (err: any) {
     }
-  }, [tokens.youtrackToken, timeEntries, selectedDate, workItemsMap, currentUser?.id, groupedEntries]);
+  }, [tokens.youtrackToken, timeEntries, startOfWeek, workItemsMap, currentUser?.id, groupedEntries]);
 
   const transferToYouTrack = useCallback(async (entry: TimeEntry): Promise<void> => {
     if (!tokens.youtrackToken) {
@@ -112,7 +112,7 @@ export const useTransfer = (tokens: Tokens, timeEntries: TimeEntry[], selectedDa
     } catch (err: any) {
       setError(`Ошибка переноса в YouTrack: ${err.message}`);
     }
-  }, [tokens.youtrackToken, selectedDate, transferMutation, currentUser?.id, groupedEntries]);
+  }, [tokens.youtrackToken, startOfWeek, transferMutation, currentUser?.id, groupedEntries]);
 
   return {
     transferredEntries,

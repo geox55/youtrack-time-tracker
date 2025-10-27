@@ -1,27 +1,30 @@
-export const getWeekRange = (selectedDate: string): { startDate: string; endDate: string } => {
-  const selectedDateObj = new Date(selectedDate);
-  const dayOfWeek = selectedDateObj.getDay();
-  const daysToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+export const dateToString = (date: Date): string => {
+  return date.toISOString().split('T')[0];
+};
 
-  const startDate = new Date(selectedDateObj);
-  startDate.setDate(selectedDateObj.getDate() + daysToMonday);
+export const createDateAtStartOfWeek = (dateString: string): Date => {
+  const baseDate = new Date(dateString);
+  const startOfWeek = new Date(baseDate);
+  startOfWeek.setDate(baseDate.getDate() - baseDate.getDay() + 1);
+  startOfWeek.setHours(0, 0, 0, 0);
+  return startOfWeek;
+};
+
+export const getWeekRange = (selectedDate: Date): { startDate: string; endDate: string } => {
+  const startDate = selectedDate;
 
   const endDate = new Date(startDate);
-  endDate.setDate(startDate.getDate() + 7);
+  endDate.setDate(startDate.getDate() + 6);
+  endDate.setHours(23, 59, 59, 999);
 
   return {
-    startDate: startDate.toISOString().split('T')[0],
-    endDate: endDate.toISOString().split('T')[0]
+    startDate: dateToString(startDate),
+    endDate: dateToString(endDate)
   };
 };
 
-export const formatDateRange = (selectedDate: string): string => {
-  const selectedDateObj = new Date(selectedDate);
-  const dayOfWeek = selectedDateObj.getDay();
-  const daysToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-
-  const startDate = new Date(selectedDateObj);
-  startDate.setDate(selectedDateObj.getDate() + daysToMonday);
+export const formatDateRange = (selectedDate: Date): string => {
+  const startDate = selectedDate;
 
   const endDate = new Date(startDate);
   endDate.setDate(startDate.getDate() + 6);

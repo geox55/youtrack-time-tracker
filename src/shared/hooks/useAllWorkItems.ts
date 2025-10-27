@@ -7,12 +7,9 @@ import { youtrackApi } from '@/shared/api';
 const searchWorkItems = async (
   token: string,
   issueId: string,
-  selectedDate: string
+  startOfWeek: Date,
+  currentUserId?: string
 ): Promise<WorkItem[]> => {
-  const selectedDateObj = new Date(selectedDate);
-  const startOfWeek = new Date(selectedDateObj);
-  startOfWeek.setDate(selectedDateObj.getDate() - selectedDateObj.getDay());
-  startOfWeek.setHours(0, 0, 0, 0);
 
   const endOfWeek = new Date(startOfWeek);
   endOfWeek.setDate(startOfWeek.getDate() + 6);
@@ -32,7 +29,9 @@ const searchWorkItems = async (
 
     const relevantInPage = response.filter((item: WorkItem) => {
       const itemDate = new Date(item.date);
-      return itemDate >= startOfWeek && itemDate <= endOfWeek;
+      const isInDateRange = itemDate >= startOfWeek && itemDate <= endOfWeek;
+      const isCurrentUser = !currentUserId || item.author?.id === currentUserId;
+      return isInDateRange && isCurrentUser;
     });
 
     if (relevantInPage.length > 0) {
@@ -46,7 +45,7 @@ const searchWorkItems = async (
   return allWorkItems;
 };
 
-export const useAllWorkItems = (tokens: any, timeEntries: TimeEntry[], selectedDate: string) => {
+export const useAllWorkItems = (tokens: any, timeEntries: TimeEntry[], startOfWeek: Date, currentUserId?: string) => {
   const issueIds = useMemo(() => {
     const ids = new Set<string>();
     timeEntries.forEach(entry => {
@@ -60,9 +59,9 @@ export const useAllWorkItems = (tokens: any, timeEntries: TimeEntry[], selectedD
 
   const queries = useQueries({
     queries: issueIds.map(issueId => ({
-      queryKey: ['youtrack-work-items', issueId, selectedDate],
+      queryKey: ['youtrack-work-items', issueId, startOfWeek.getTime(), currentUserId],
       queryFn: async () => {
-        const workItems = await searchWorkItems(tokens.youtrackToken, issueId, selectedDate);
+        const workItems = await searchWorkItems(tokens.youtrackToken, issueId, startOfWeek, currentUserId);
 
         const grouped: Record<string, WorkItem[]> = {};
         workItems.forEach(item => {
