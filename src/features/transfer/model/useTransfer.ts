@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { toast } from 'react-toastify';
 import { TimeEntry, Tokens, WorkItem } from '@/shared/model';
 import { extractIssueId, extractDescription, isEntryTransferred, GroupedTimeEntry, roundToNearest5Minutes } from '@/shared/lib';
 import { useYouTrackTransfer, useYouTrackUser, useSettings } from '@/shared/hooks';
@@ -6,6 +7,7 @@ import { togglApi, youtrackApi } from '@/shared/api';
 
 export const useTransfer = (tokens: Tokens, timeEntries: TimeEntry[], startOfWeek: Date, workItemsMap: Record<string, Record<string, WorkItem[]>>, groupedEntries?: GroupedTimeEntry[]) => {
   const [transferredEntries, setTransferredEntries] = useState<Set<number>>(new Set());
+  const [transferringEntries, setTransferringEntries] = useState<Set<number>>(new Set());
   const [error, setError] = useState<string>('');
 
   const transferMutation = useYouTrackTransfer();
@@ -45,32 +47,46 @@ export const useTransfer = (tokens: Tokens, timeEntries: TimeEntry[], startOfWee
 
   const transferToYouTrack = useCallback(async (entry: TimeEntry): Promise<void> => {
     if (!tokens.youtrackToken) {
-      setError('Не заполнен YouTrack токен');
+      const errorMsg = 'Не заполнен YouTrack токен';
+      setError(errorMsg);
+      toast.error(errorMsg);
       return;
     }
 
     const issueId = extractIssueId(entry.description);
     if (!issueId) {
-      setError('Не найден ID задачи в описании');
+      const errorMsg = 'Не найден ID задачи в описании';
+      setError(errorMsg);
+      toast.error(errorMsg);
       return;
     }
+
+    // Add entry to transferring set
+    setTransferringEntries(prev => new Set([...prev, entry.id]));
 
     let createdWorkItemId: string | null = null;
 
     try {
       if (isEntryTransferred(entry, workItemsMap, currentUser?.id)) {
-        setError('Этот трекинг уже перенесен в YouTrack');
+        const errorMsg = 'Этот трекинг уже перенесен в YouTrack';
+        setError(errorMsg);
+        toast.error(errorMsg);
+        setTransferringEntries(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(entry.id);
+          return newSet;
+        });
         return;
       }
 
-      const entryDate = entry.start.split('T')[0];
-      const description = extractDescription(entry.description);
-      const entryDateObj = new Date(entryDate);
+      const entryDateStr = entry.start.split('T')[0];
+      const entryDescription = extractDescription(entry.description);
+      const entryDateObj = new Date(entryDateStr);
       const timestamp = entryDateObj.getTime();
 
       const workItem = {
         duration: { minutes: roundToNearest5Minutes(entry.duration / 60) },
-        text: description,
+        text: entryDescription,
         date: timestamp
       };
 
@@ -115,18 +131,36 @@ export const useTransfer = (tokens: Tokens, timeEntries: TimeEntry[], startOfWee
 
       setError('');
 
+      const entryDate = new Date(entry.start);
+      const dateStr = entryDate.toLocaleDateString('ru-RU', {
+        day: '2-digit',
+        month: '2-digit'
+      });
+      const dayOfWeek = entryDate.toLocaleDateString('ru-RU', { weekday: 'long' });
+      toast.success(`${issueId}: ${entryDescription} перенесена (${dayOfWeek}, ${dateStr})`);
+
     } catch (err: any) {
-      // Различаем ошибки по типу
+      let errorMessage: string;
       if (createdWorkItemId) {
-        setError(`Ошибка тегирования Toggl: ${err.message}`);
+        errorMessage = `Ошибка тегирования Toggl: ${err.message}`;
       } else {
-        setError(`Ошибка создания в YouTrack: ${err.message}`);
+        errorMessage = `Ошибка создания в YouTrack: ${err.message}`;
       }
+      setError(errorMessage);
+      toast.error(errorMessage);
+    } finally {
+      // Remove entry from transferring set
+      setTransferringEntries(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(entry.id);
+        return newSet;
+      });
     }
   }, [tokens.youtrackToken, startOfWeek, transferMutation, currentUser?.id, groupedEntries, settings.togglWorkspaceId, workItemsMap]);
 
   return {
     transferredEntries,
+    transferringEntries,
     error,
     transferToYouTrack,
     checkExistingEntries

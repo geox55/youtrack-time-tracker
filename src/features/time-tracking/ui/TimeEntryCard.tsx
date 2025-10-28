@@ -7,6 +7,7 @@ import { useSettings } from '@/shared/hooks';
 export const TimeEntryCard = memo(({
   entry,
   isTransferred,
+  isTransferring = false,
   formatDuration,
   formatTime,
   onTransfer,
@@ -76,9 +77,10 @@ export const TimeEntryCard = memo(({
             <button
               className="transfer-button"
               onClick={() => onTransfer(entry)}
-              title={`Перенести в YouTrack timesheet`}
+              disabled={isTransferring}
+              title={isTransferring ? 'Перенос в процессе...' : 'Перенести в YouTrack timesheet'}
             >
-              📤 Перенести
+              {isTransferring ? '⏳ Перенос...' : '📤 Перенести'}
             </button>
           )}
         </div>

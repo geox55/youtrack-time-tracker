@@ -9,6 +9,7 @@ export const TimeEntriesList = memo(({
   selectedDate,
   dateRange,
   transferredEntries,
+  transferringEntries = new Set(),
   onDateChange,
   onTransfer,
   onRefresh,
@@ -65,6 +66,7 @@ export const TimeEntriesList = memo(({
                   key={entry.id}
                   entry={entry}
                   isTransferred={transferredEntries.has(entry.id)}
+                  isTransferring={transferringEntries.has(entry.id)}
                   formatDuration={formatDuration}
                   formatTime={formatTime}
                   onTransfer={onTransfer}

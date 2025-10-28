@@ -7,6 +7,7 @@ export interface TimeEntriesListProps {
   selectedDate: string;
   dateRange: string;
   transferredEntries: Set<number>;
+  transferringEntries?: Set<number>;
   onDateChange: (date: string) => void;
   onTransfer: (entry: TimeEntry) => void;
   onRefresh: () => void;
@@ -17,6 +18,7 @@ export interface TimeEntriesListProps {
 export interface TimeEntryCardProps {
   entry: TimeEntry;
   isTransferred: boolean;
+  isTransferring?: boolean;
   formatDuration: (seconds: number) => string;
   formatTime: (dateString: string) => string;
   onTransfer: (entry: TimeEntry) => void;

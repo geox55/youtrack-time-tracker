@@ -41,6 +41,7 @@ export const TrackerPage = () => {
   const { workItemsMap, loading: workItemsLoading, error: workItemsError } = useAllWorkItems(tokens, timeEntries, startOfWeek, currentUser?.id);
   const {
     transferredEntries,
+    transferringEntries,
     error: transferError,
     transferToYouTrack,
     checkExistingEntries
@@ -111,6 +112,7 @@ export const TrackerPage = () => {
         selectedDate={selectedDate}
         dateRange={formatDateRange(startOfWeek)}
         transferredEntries={transferredEntries}
+        transferringEntries={transferringEntries}
         onDateChange={handleDateChange}
         onTransfer={transferToYouTrack}
         onRefresh={handleRefresh}
