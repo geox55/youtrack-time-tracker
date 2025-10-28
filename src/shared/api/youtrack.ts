@@ -31,8 +31,8 @@ export const youtrackApi = {
     return Array.isArray(response) ? response : [];
   },
 
-  async createWorkItem(token: string, issueId: string, workItem: WorkItem): Promise<void> {
-    await request(
+  async createWorkItem(token: string, issueId: string, workItem: WorkItem): Promise<string> {
+    const response = await request(
       `/issues/${issueId}/${TIME_TRACKING_WORK_ITEMS_URL}`,
       token,
       {
@@ -42,6 +42,15 @@ export const youtrackApi = {
           'Content-Type': 'application/json'
         }
       }
+    );
+    return response.id;
+  },
+
+  async deleteWorkItem(token: string, issueId: string, workItemId: string): Promise<void> {
+    await request(
+      `/issues/${issueId}/${TIME_TRACKING_WORK_ITEMS_URL}/${workItemId}`,
+      token,
+      { method: 'DELETE' }
     );
   },
 

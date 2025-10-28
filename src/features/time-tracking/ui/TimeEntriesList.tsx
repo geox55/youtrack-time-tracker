@@ -1,6 +1,5 @@
 import { memo } from 'react';
 import { TimeEntriesListProps } from '../types';
-import { dateToString } from '@/shared/lib';
 import { TimeEntryCard } from './TimeEntryCard';
 import { formatDuration, formatTime, formatDate, groupEntriesByDate } from '@/shared/lib';
 
@@ -31,7 +30,7 @@ export const TimeEntriesList = memo(({
           <label>Период:</label>
           <input
             type="date"
-            value={dateToString(selectedDate)}
+            value={selectedDate}
             onChange={(e) => onDateChange(e.target.value)}
           />
           <span className="date-range">{dateRange}</span>

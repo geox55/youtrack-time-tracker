@@ -6,23 +6,27 @@ import { useTransfer } from '@/features/transfer';
 import { useTimeValidation } from '@/features/time-validation';
 import { SettingsModal } from '@/features/settings';
 import { useAllWorkItems, useYouTrackUser, useSettings } from '@/shared/hooks';
-import { formatDateRange, createDateAtStartOfWeek, dateToString } from '@/shared/lib';
+import { formatDateRange } from '@/shared/lib';
 
 export const TrackerPage = () => {
   const queryClient = useQueryClient();
   const { tokens } = useTokens();
 
-  const [startOfWeek, setStartOfWeek] = useState<Date>(() => {
+  const [selectedDate, setSelectedDate] = useState<string>(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const dateFromUrl = urlParams.get('date');
-    const baseDate = dateFromUrl ? new Date(dateFromUrl) : new Date();
-
-    const startOfWeek = new Date(baseDate);
-    startOfWeek.setDate(baseDate.getDate() - baseDate.getDay() + 1);
-    startOfWeek.setHours(0, 0, 0, 0);
-
-    return startOfWeek;
+    return dateFromUrl || new Date().toISOString().split('T')[0];
   });
+
+  const startOfWeek = useMemo(() => {
+    const baseDate = new Date(selectedDate);
+    const startOfWeek = new Date(baseDate);
+    const dayOfWeek = baseDate.getDay();
+    const daysToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+    startOfWeek.setDate(baseDate.getDate() + daysToMonday);
+    startOfWeek.setHours(0, 0, 0, 0);
+    return startOfWeek;
+  }, [selectedDate]);
 
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
 
@@ -73,11 +77,10 @@ export const TrackerPage = () => {
   }, [validationErrors]);
 
   const handleDateChange = useCallback((newDate: string) => {
-    const newStartOfWeek = createDateAtStartOfWeek(newDate);
-    setStartOfWeek(newStartOfWeek);
+    setSelectedDate(newDate);
 
     const url = new URL(window.location.href);
-    url.searchParams.set('date', dateToString(newStartOfWeek));
+    url.searchParams.set('date', newDate);
     window.history.pushState({}, '', url.toString());
   }, []);
 
@@ -107,7 +110,7 @@ export const TrackerPage = () => {
       <TimeEntriesList
         timeEntries={timeEntries}
         loading={loading || workItemsLoading || validationLoading}
-        selectedDate={startOfWeek}
+        selectedDate={selectedDate}
         dateRange={formatDateRange(startOfWeek)}
         transferredEntries={transferredEntries}
         onDateChange={handleDateChange}

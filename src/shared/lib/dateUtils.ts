@@ -5,7 +5,9 @@ export const dateToString = (date: Date): string => {
 export const createDateAtStartOfWeek = (dateString: string): Date => {
   const baseDate = new Date(dateString);
   const startOfWeek = new Date(baseDate);
-  startOfWeek.setDate(baseDate.getDate() - baseDate.getDay() + 1);
+  const dayOfWeek = baseDate.getDay();
+  const daysToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+  startOfWeek.setDate(baseDate.getDate() + daysToMonday);
   startOfWeek.setHours(0, 0, 0, 0);
   return startOfWeek;
 };

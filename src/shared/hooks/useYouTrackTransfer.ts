@@ -14,10 +14,10 @@ export const useYouTrackTransfer = () => {
       token: string;
       issueId: string;
       workItem: WorkItem;
-    }): Promise<void> => {
-      await youtrackApi.createWorkItem(token, issueId, workItem);
+    }): Promise<string> => {
+      return await youtrackApi.createWorkItem(token, issueId, workItem);
     },
-    onSuccess: (_: void, { issueId }: { token: string; issueId: string; workItem: WorkItem }) => {
+    onSuccess: (_: string, { issueId }: { token: string; issueId: string; workItem: WorkItem }) => {
       queryClient.invalidateQueries({
         queryKey: ['youtrack-work-items', issueId],
       });
