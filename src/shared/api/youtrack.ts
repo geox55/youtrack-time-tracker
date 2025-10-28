@@ -22,7 +22,7 @@ const request = async (endpoint: string, token: string, options: any = {}): Prom
 }
 
 export const youtrackApi = {
-  async getWorkItems(token: string, issueId: string, skip: number = 0, pageSize: number = 100): Promise<WorkItem[]> {
+  async getWorkItems(token: string, issueId: string, skip: number = 0, pageSize: number = 2000): Promise<WorkItem[]> {
     const response = await request(
       `/issues/${issueId}/${TIME_TRACKING_WORK_ITEMS_URL}?fields=id,date,duration(minutes),text,author(id,login,name)&$skip=${skip}&$top=${pageSize}`,
       token

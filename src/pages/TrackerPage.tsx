@@ -86,9 +86,7 @@ export const TrackerPage = () => {
 
   const handleRefresh = useCallback(async () => {
     await queryClient.invalidateQueries({ queryKey: ['toggl-entries'] });
-    await queryClient.invalidateQueries({ queryKey: ['youtrack-user'] });
-
-
+    await queryClient.invalidateQueries({ queryKey: ['youtrack-work-items'] });
     await loadTimeEntries();
   }, [queryClient, loadTimeEntries]);
 

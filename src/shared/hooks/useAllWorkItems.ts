@@ -16,7 +16,7 @@ const searchWorkItems = async (
   endOfWeek.setHours(23, 59, 59, 999);
 
   const allWorkItems: WorkItem[] = [];
-  const pageSize = 100;
+  const pageSize = 2000;
   let skip = 0;
   let hasMore = true;
 
