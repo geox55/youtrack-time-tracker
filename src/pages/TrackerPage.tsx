@@ -95,13 +95,23 @@ export const TrackerPage = () => {
     <>
       <div className="page-header">
         <h1>Toggl ↔ YouTrack Integration</h1>
-        <button
-          className={`settings-button ${!isApiConfigured ? 'error' : ''}`}
-          onClick={() => setIsSettingsOpen(true)}
-        >
-          ⚙️ Настройки
-          {!isApiConfigured && <span className="settings-error-indicator">⚠️</span>}
-        </button>
+        <div className="header-actions">
+          <a
+            href="https://youtrack.infra.gbooking.ru/timesheets"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="timesheets-link"
+          >
+            📊 Таймшиты ↗
+          </a>
+          <button
+            className={`settings-button ${!isApiConfigured ? 'error' : ''}`}
+            onClick={() => setIsSettingsOpen(true)}
+          >
+            ⚙️ Настройки
+            {!isApiConfigured && <span className="settings-error-indicator">⚠️</span>}
+          </button>
+        </div>
       </div>
 
       {error && <div className="error">{error}</div>}

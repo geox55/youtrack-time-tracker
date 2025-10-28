@@ -460,13 +460,45 @@ body {
 }
 
 .entry-issue-id {
-  background: #667eea;
-  color: white;
-  padding: 0.25rem 0.75rem;
-  border-radius: 20px;
+  background: #ffffff;
+  color: #495057;
+  padding: 0.4rem 0.8rem;
+  border: 2px solid #667eea;
+  border-radius: 8px;
   font-size: 0.9rem;
   font-weight: 600;
   font-family: 'Courier New', monospace;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-block;
+  position: relative;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.entry-issue-id::after {
+  content: '↗';
+  margin-left: 0.3rem;
+  font-size: 0.8rem;
+  opacity: 0.7;
+  color: #667eea;
+}
+
+.entry-issue-id-link {
+  text-decoration: none;
+  color: inherit;
+}
+
+.entry-issue-id-link:hover {
+  background: #667eea;
+  border-color: #5a6fd8;
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 12px rgba(102, 126, 234, 0.3);
+}
+
+.entry-issue-id-link:hover::after {
+  opacity: 1;
+  color: #ffffff;
 }
 
 .entry-duration {
@@ -756,6 +788,33 @@ body {
   align-items: center;
   margin-bottom: 2rem;
   padding: 1rem 0;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.timesheets-link {
+  background: #28a745;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.timesheets-link:hover {
+  background: #218838;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+  color: white;
 }
 
 .page-header h1 {

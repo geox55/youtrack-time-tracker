@@ -106,21 +106,6 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
                   </div>
                 </div>
 
-                <div className="setting-item">
-                  <label className="setting-label">
-                    <span className="setting-text">YouTrack Base URL:</span>
-                    <input
-                      type="url"
-                      value={settings.youtrackBaseUrl}
-                      onChange={(e) => updateSetting('youtrackBaseUrl', e.target.value)}
-                      placeholder="https://yourcompany.myjetbrains.com/youtrack"
-                      className="setting-input"
-                    />
-                  </label>
-                  <div className="setting-description">
-                    Базовый URL для создания ссылок на задачи YouTrack
-                  </div>
-                </div>
               </div>
             )}
           </div>

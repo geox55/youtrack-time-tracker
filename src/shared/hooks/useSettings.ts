@@ -2,13 +2,11 @@ import { useState, useEffect } from 'react';
 
 interface AppSettings {
   groupTogglTracks: boolean;
-  youtrackBaseUrl: string;
   togglWorkspaceId: string;
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
   groupTogglTracks: true, // По умолчанию группировка включена
-  youtrackBaseUrl: '', // По умолчанию пустой URL
   togglWorkspaceId: '', // По умолчанию пустой Workspace ID
 };
 
