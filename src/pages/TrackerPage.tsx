@@ -36,21 +36,21 @@ export const TrackerPage = () => {
 
   const { data: currentUser } = useYouTrackUser(tokens.youtrackToken);
 
-  const { timeEntries, groupedEntries, loading, error: timeEntriesError, loadTimeEntries } = useTimeEntries(tokens, startOfWeek, settings.groupTogglTracks);
-  const { workItemsMap, loading: workItemsLoading, error: workItemsError } = useAllWorkItems(tokens, timeEntries, startOfWeek, currentUser?.id);
+  const { timeEntries, loading, error: timeEntriesError } = useTimeEntries(tokens, startOfWeek, settings.groupTogglTracks);
+  const { workItemsMap, loading: workItemsLoading, error: workItemsError } = useAllWorkItems(tokens, timeEntries, startOfWeek, currentUser?.id, settings.groupTogglTracks);
   const {
     transferredEntries,
     transferringEntries,
     error: transferError,
     transferToYouTrack,
     checkExistingEntries
-  } = useTransfer(tokens, timeEntries, startOfWeek, workItemsMap, groupedEntries);
+  } = useTransfer(tokens, timeEntries, startOfWeek, workItemsMap);
 
   const {
     validationResults,
     validationErrors,
     loading: validationLoading,
-  } = useTimeValidation(tokens, timeEntries, workItemsMap, currentUser?.id);
+  } = useTimeValidation(tokens, timeEntries, workItemsMap, currentUser?.id, settings.groupTogglTracks);
 
   const error = timeEntriesError || workItemsError || transferError;
 
@@ -86,8 +86,7 @@ export const TrackerPage = () => {
 
   const handleRefresh = useCallback(async () => {
     await invalidateAll();
-    await loadTimeEntries();
-  }, [invalidateAll, loadTimeEntries]);
+  }, [invalidateAll]);
 
   return (
     <>

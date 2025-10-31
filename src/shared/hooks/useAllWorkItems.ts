@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useQueries } from '@tanstack/react-query';
 import { TimeEntry, WorkItem } from '@/shared/model';
-import { extractIssueId } from '@/shared/lib';
+import { extractIssueId, getGroupKeyForWorkItem } from '@/shared/lib';
 import { youtrackApi } from '@/shared/api';
 
 const searchWorkItems = async (
@@ -45,7 +45,7 @@ const searchWorkItems = async (
   return allWorkItems;
 };
 
-export const useAllWorkItems = (tokens: any, timeEntries: TimeEntry[], startOfWeek: Date, currentUserId?: string) => {
+export const useAllWorkItems = (tokens: any, timeEntries: TimeEntry[], startOfWeek: Date, currentUserId?: string, isGrouped: boolean = true) => {
   const issueIds = useMemo(() => {
     const ids = new Set<string>();
     timeEntries.forEach(entry => {
@@ -59,17 +59,27 @@ export const useAllWorkItems = (tokens: any, timeEntries: TimeEntry[], startOfWe
 
   const queries = useQueries({
     queries: issueIds.map(issueId => ({
-      queryKey: ['youtrack-work-items', issueId, startOfWeek.getTime(), currentUserId],
+      queryKey: ['youtrack-work-items', issueId, startOfWeek.getTime(), currentUserId, isGrouped],
       queryFn: async () => {
         const workItems = await searchWorkItems(tokens.youtrackToken, issueId, startOfWeek, currentUserId);
 
         const grouped: Record<string, WorkItem[]> = {};
+        
+        // В несгруппированном режиме создаём группы и с Toggl ID (если доступен в метаданных), и без
+        // Пока Toggl ID недоступен из WorkItem, используем fallback на дату
         workItems.forEach(item => {
-          const itemDate = new Date(item.date);
-          const dateKey = itemDate.toISOString().split('T')[0];
-          const groupKey = `${item.text}-${dateKey}`;
-          if (!grouped[groupKey]) grouped[groupKey] = [];
-          grouped[groupKey].push(item);
+          if (isGrouped) {
+            // Группированный режим: используем стандартную группировку
+            const groupKey = getGroupKeyForWorkItem(item, isGrouped);
+            if (!grouped[groupKey]) grouped[groupKey] = [];
+            grouped[groupKey].push(item);
+          } else {
+            // Несгруппированный режим: создаём группы для возможных вариантов
+            // Пока Toggl ID недоступен в WorkItem, используем fallback на дату
+            const groupKey = getGroupKeyForWorkItem(item, isGrouped);
+            if (!grouped[groupKey]) grouped[groupKey] = [];
+            grouped[groupKey].push(item);
+          }
         });
 
         return { issueId, data: grouped };

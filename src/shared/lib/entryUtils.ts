@@ -75,12 +75,7 @@ export const groupEntriesByIssue = (entries: TimeEntry[]): TimeEntry[] => {
   return groupedEntries;
 };
 
-// Расширенный тип для группированных трекингов с информацией об оригинальных ID
-export interface GroupedTimeEntry extends TimeEntry {
-  originalIds: number[];
-}
-
-export const groupEntriesByIssueWithOriginalIds = (entries: TimeEntry[]): GroupedTimeEntry[] => {
+export const groupEntriesByIssueWithOriginalIds = (entries: TimeEntry[]): TimeEntry[] => {
   const groupedMap = new Map<string, TimeEntry[]>();
 
   // Группируем трекинги по issue ID + полное описание + дате
@@ -99,7 +94,7 @@ export const groupEntriesByIssueWithOriginalIds = (entries: TimeEntry[]): Groupe
   });
 
   // Объединяем трекинги в один для каждой задачи в рамках одного дня
-  const groupedEntries: GroupedTimeEntry[] = [];
+  const groupedEntries: TimeEntry[] = [];
 
   groupedMap.forEach((issueEntries) => {
     if (issueEntries.length === 0) return;
@@ -123,7 +118,7 @@ export const groupEntriesByIssueWithOriginalIds = (entries: TimeEntry[]): Groupe
     const latestStop = stopTimes.length > 0 ? new Date(Math.max(...stopTimes)) : null;
 
     // Создаем объединенный трекинг с информацией об оригинальных ID
-    const groupedEntry: GroupedTimeEntry = {
+    const groupedEntry: TimeEntry = {
       id: firstEntry.id, // Используем ID первого трекинга
       description: firstEntry.description, // Берем описание из первого трекинга
       start: earliestStart.toISOString(),
@@ -156,20 +151,56 @@ export const extractDescription = (description: string): string => {
   return extractedDescription;
 };
 
-export const isEntryTransferred = (entry: TimeEntry, workItemsMap: Record<string, Record<string, WorkItem[]>>, currentUserId?: string): boolean => {
+/**
+ * Генерирует ключ группировки для TimeEntry
+ * @param entry - трекинг времени
+ * @param isGrouped - режим группировки
+ * @returns ключ группировки: для группированного режима `${description}-${date}`, для несгруппированного `${description}-${entryId}-${date}`
+ */
+export const getGroupKeyForEntry = (entry: TimeEntry, isGrouped: boolean): string => {
+  const entryDate = entry.start.split('T')[0];
+  const entryDescription = extractDescription(entry.description);
+
+  if (isGrouped) {
+    return `${entryDescription}-${entryDate}`;
+  } else {
+    return `${entryDescription}-${entry.id}-${entryDate}`;
+  }
+};
+
+/**
+ * Генерирует ключ группировки для WorkItem
+ * @param item - элемент работы из YouTrack
+ * @param isGrouped - режим группировки
+ * @param togglId - опциональный Toggl ID для несгруппированного режима
+ * @returns ключ группировки: для группированного режима `${text}-${date}`, для несгруппированного `${text}-${togglId || item.date}-${date}`
+ */
+export const getGroupKeyForWorkItem = (item: WorkItem, isGrouped: boolean, togglId?: number): string => {
+  const itemDate = new Date(item.date);
+  const dateKey = itemDate.toISOString().split('T')[0];
+
+  if (isGrouped) {
+    return `${item.text}-${dateKey}`;
+  } else {
+    // В несгруппированном режиме используем Toggl ID если доступен, иначе fallback на дату
+    const uniqueId = togglId || item.date;
+    return `${item.text}-${uniqueId}-${dateKey}`;
+  }
+};
+
+export const isEntryTransferred = (entry: TimeEntry, workItemsMap: Record<string, Record<string, WorkItem[]>>, currentUserId?: string, isGrouped: boolean = true): boolean => {
   const issueId = extractIssueId(entry.description);
   if (!issueId) return false;
 
-  const entryDate = entry.start.split('T')[0];
   const entryDurationMinutes = Math.round(entry.duration / 60);
   const entryDescription = extractDescription(entry.description);
 
   // Получаем WorkItems для этой задачи
   const issueWorkItems = workItemsMap[issueId] || {};
 
-  // Ищем группу с совпадающим описанием и датой
-  const groupKey = `${entryDescription}-${entryDate}`;
-  const matchingGroup = issueWorkItems[groupKey] || [];
+  // Генерируем ключ для трекинга
+  const entryGroupKey = getGroupKeyForEntry(entry, isGrouped);
+  const matchingGroup = issueWorkItems[entryGroupKey] || [];
 
   // Фильтруем по пользователю, если указан currentUserId
   let relevantItems = matchingGroup;
@@ -179,12 +210,55 @@ export const isEntryTransferred = (entry: TimeEntry, workItemsMap: Record<string
     );
   }
 
-  // Проверяем совпадение длительности
-  const totalDuration = relevantItems.reduce((sum, item) =>
-    sum + (item.duration?.minutes || 0), 0
-  );
+  if (isGrouped) {
+    // Группированный режим: проверяем совпадение длительности (сумма группы)
+    const totalDuration = relevantItems.reduce((sum, item) =>
+      sum + (item.duration?.minutes || 0), 0
+    );
 
-  const isSameDuration = Math.abs(totalDuration - entryDurationMinutes) <= 2;
+    const isSameDuration = Math.abs(totalDuration - entryDurationMinutes) <= 2;
 
-  return relevantItems.length > 0 && isSameDuration;
+    return relevantItems.length > 0 && isSameDuration;
+  } else {
+    // Несгруппированный режим: если точный ключ не найден, используем fallback
+    if (relevantItems.length === 0) {
+      // Fallback: ищем все группы с совпадающей датой
+      const entryDate = entry.start.split('T')[0];
+      let matchingItems: WorkItem[] = [];
+
+      Object.keys(issueWorkItems).forEach(groupKey => {
+        // Проверяем, что дата совпадает
+        if (groupKey.endsWith(`-${entryDate}`)) {
+          matchingItems.push(...issueWorkItems[groupKey]);
+        }
+      });
+
+      // Фильтруем по пользователю
+      if (currentUserId) {
+        matchingItems = matchingItems.filter(item =>
+          item.author?.id === currentUserId
+        );
+      }
+
+      // Проверяем, есть ли WorkItem с точным совпадением описания и длительности
+      const exactMatch = matchingItems.find(item => {
+        const itemDuration = item.duration?.minutes || 0;
+        const isSameDescription = item.text === entryDescription;
+        const isSameDuration = Math.abs(itemDuration - entryDurationMinutes) <= 2;
+
+        return isSameDescription && isSameDuration;
+      });
+
+      return !!exactMatch;
+    }
+
+    // Если точный ключ найден, проверяем совпадение длительности
+    const exactMatch = relevantItems.find(item => {
+      const itemDuration = item.duration?.minutes || 0;
+      const isSameDuration = Math.abs(itemDuration - entryDurationMinutes) <= 2;
+      return isSameDuration;
+    });
+
+    return !!exactMatch;
+  }
 };
