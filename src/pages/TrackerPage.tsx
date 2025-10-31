@@ -1,16 +1,15 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
 import { useTokens } from '@/features/auth';
 import { TimeEntriesList, useTimeEntries } from '@/features/time-tracking';
 import { useTransfer } from '@/features/transfer';
 import { useTimeValidation } from '@/features/time-validation';
 import { SettingsModal } from '@/features/settings';
-import { useAllWorkItems, useYouTrackUser, useSettings } from '@/shared/hooks';
+import { useAllWorkItems, useYouTrackUser, useSettings, useQueryInvalidation } from '@/shared/hooks';
 import { formatDateRange } from '@/shared/lib';
 
 export const TrackerPage = () => {
-  const queryClient = useQueryClient();
   const { tokens } = useTokens();
+  const { invalidateAll } = useQueryInvalidation();
 
   const [selectedDate, setSelectedDate] = useState<string>(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -86,10 +85,9 @@ export const TrackerPage = () => {
   }, []);
 
   const handleRefresh = useCallback(async () => {
-    await queryClient.invalidateQueries({ queryKey: ['toggl-entries'] });
-    await queryClient.invalidateQueries({ queryKey: ['youtrack-work-items'] });
+    await invalidateAll();
     await loadTimeEntries();
-  }, [queryClient, loadTimeEntries]);
+  }, [invalidateAll, loadTimeEntries]);
 
   return (
     <>

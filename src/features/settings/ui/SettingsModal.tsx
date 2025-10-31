@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { TokensFormInline, useTokens } from '@/features/auth';
-import { useSettings } from '@/shared/hooks';
+import { useSettings, useQueryInvalidation } from '@/shared/hooks';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -11,6 +11,7 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
   const [activeTab, setActiveTab] = useState<'api' | 'grouping'>('api');
   const { tokens, setTokens } = useTokens();
   const { settings, updateSetting } = useSettings();
+  const { invalidateTimeEntries } = useQueryInvalidation();
 
   // Проверяем, заполнены ли токены и workspace ID
   const isApiConfigured = tokens.togglToken && tokens.youtrackToken && settings.togglWorkspaceId;
@@ -66,6 +67,11 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
                       type="text"
                       value={settings.togglWorkspaceId}
                       onChange={(e) => updateSetting('togglWorkspaceId', e.target.value)}
+                      onBlur={(e) => {
+                        if (e.target.value.trim() !== '') {
+                          invalidateTimeEntries();
+                        }
+                      }}
                       placeholder="1234567"
                       className="setting-input"
                       required
@@ -92,7 +98,10 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
                     <input
                       type="checkbox"
                       checked={settings.groupTogglTracks}
-                      onChange={(e) => updateSetting('groupTogglTracks', e.target.checked)}
+                      onChange={(e) => {
+                        updateSetting('groupTogglTracks', e.target.checked);
+                        invalidateTimeEntries();
+                      }}
                     />
                     <span className="setting-text">
                       Объединять треки из Toggl по задаче и описанию

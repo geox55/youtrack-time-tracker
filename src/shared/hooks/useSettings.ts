@@ -44,9 +44,13 @@ export const useSettings = () => {
 
   const updateSetting = <K extends keyof AppSettings>(
     key: K,
-    value: AppSettings[K]
+    value: AppSettings[K],
+    onUpdate?: () => void
   ) => {
     setSettings(prev => ({ ...prev, [key]: value }));
+    if (onUpdate) {
+      onUpdate();
+    }
   };
 
   const resetSettings = () => {
