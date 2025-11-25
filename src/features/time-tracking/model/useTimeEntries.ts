@@ -1,68 +1,48 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { TimeEntry, Tokens } from '@/shared/model';
 import { useTogglEntries } from '@/shared/hooks';
-import { filterEntriesWithYouTrackId, sortEntriesByDate, groupEntriesByIssueWithOriginalIds, GroupedTimeEntry } from '@/shared/lib';
-
-interface UseTimeEntriesProps {
-  tokens: Tokens;
-  startOfWeek: Date;
-  groupTracks: boolean;
-}
+import { filterEntriesWithYouTrackId, sortEntriesByDate, groupEntriesByIssueWithOriginalIds } from '@/shared/lib';
 
 export const useTimeEntries = (tokens: Tokens, startOfWeek: Date, groupTracks: boolean = true) => {
-  const [timeEntries, setTimeEntries] = useState<TimeEntry[]>([]);
-  const [groupedEntries, setGroupedEntries] = useState<GroupedTimeEntry[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
 
-  const { data: rawEntries = [], isLoading, error: queryError, refetch } = useTogglEntries(tokens, startOfWeek);
+  const { data: rawEntries = [], isLoading, error: queryError } = useTogglEntries(tokens, startOfWeek);
 
-  const loadTimeEntries = useCallback(async () => {
-    setLoading(true);
-    try {
-      await refetch();
-    } catch (err: any) {
-      setError(`Ошибка загрузки трекингов: ${err.message}`);
-    } finally {
-      setLoading(false);
+  // Используем useMemo для автоматического пересчёта при изменении rawEntries или groupTracks
+  const timeEntries = useMemo(() => {
+    if (!Array.isArray(rawEntries) || rawEntries.length === 0) {
+      return [] as TimeEntry[];
     }
-  }, [refetch]);
 
-  useEffect(() => {
-    if (Array.isArray(rawEntries) && rawEntries.length > 0) {
-      const filteredEntries = filterEntriesWithYouTrackId(rawEntries);
+    const filteredEntries = filterEntriesWithYouTrackId(rawEntries);
 
-      console.log('useTimeEntries: groupTracks =', groupTracks, 'filteredEntries count =', filteredEntries.length);
+    console.log('useTimeEntries: groupTracks =', groupTracks, 'filteredEntries count =', filteredEntries.length);
 
-      if (groupTracks) {
-        // Группируем трекинги по issue ID
-        const grouped = groupEntriesByIssueWithOriginalIds(filteredEntries);
-        const sortedEntries = sortEntriesByDate(grouped);
-        console.log('useTimeEntries: grouped entries count =', sortedEntries.length);
-        setTimeEntries(sortedEntries);
-        setGroupedEntries(grouped);
-      } else {
-        // Показываем все трекинги без группировки
-        const sortedEntries = sortEntriesByDate(filteredEntries);
-        console.log('useTimeEntries: ungrouped entries count =', sortedEntries.length);
-        setTimeEntries(sortedEntries);
-        setGroupedEntries([]);
-      }
-      setError('');
+    if (groupTracks) {
+      // Группируем трекинги по issue ID
+      const grouped = groupEntriesByIssueWithOriginalIds(filteredEntries);
+      const sortedEntries = sortEntriesByDate(grouped);
+      console.log('useTimeEntries: grouped entries count =', sortedEntries.length);
+      return sortedEntries;
+    } else {
+      // Показываем все трекинги без группировки
+      const sortedEntries = sortEntriesByDate(filteredEntries);
+      console.log('useTimeEntries: ungrouped entries count =', sortedEntries.length);
+      return sortedEntries;
     }
   }, [rawEntries, groupTracks]);
 
   useEffect(() => {
     if (queryError) {
       setError(`Ошибка загрузки трекингов: ${queryError.message}`);
+    } else if (Array.isArray(rawEntries)) {
+      setError('');
     }
-  }, [queryError]);
+  }, [queryError, rawEntries]);
 
   return {
     timeEntries,
-    groupedEntries,
-    loading: loading || isLoading,
-    error,
-    loadTimeEntries
+    loading: isLoading,
+    error
   };
 };

@@ -1,13 +1,14 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { TimeEntry, WorkItem, Tokens } from '@/shared/model';
-import { extractIssueId, extractDescription, roundToNearest5Minutes } from '@/shared/lib';
+import { extractIssueId, extractDescription, roundToNearest5Minutes, getGroupKeyForEntry } from '@/shared/lib';
 import { TimeValidationResult, ValidationError } from '../types';
 
 export const useTimeValidation = (
   tokens: Tokens,
   timeEntries: TimeEntry[],
   workItemsMap: Record<string, Record<string, WorkItem[]>>,
-  currentUserId?: string
+  currentUserId?: string,
+  isGrouped: boolean = true
 ) => {
   const [validationResults, setValidationResults] = useState<TimeValidationResult[]>([]);
   const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
@@ -28,19 +29,49 @@ export const useTimeValidation = (
 
       const entryDate = entry.start.split('T')[0];
       const entryDescription = extractDescription(entry.description);
-      const groupKey = `${entryDescription}-${entryDate}`;
 
       const issueWorkItems = workItemsMap[issueId] || {};
-      const matchingGroup = issueWorkItems[groupKey] || [];
 
-      const userWorkItems = matchingGroup.filter(item =>
+      // Генерируем ключ для трекинга
+      const entryGroupKey = getGroupKeyForEntry(entry, isGrouped);
+      const matchingGroup = issueWorkItems[entryGroupKey] || [];
+
+      // Фильтруем по пользователю
+      let userWorkItems: WorkItem[] = matchingGroup.filter(item =>
         item.author?.id === currentUserId
       );
 
+      // Fallback для несгруппированного режима, если точный ключ не найден
+      if (!isGrouped && userWorkItems.length === 0) {
+        Object.keys(issueWorkItems).forEach(groupKey => {
+          // Проверяем, что дата совпадает
+          if (groupKey.endsWith(`-${entryDate}`)) {
+            const items = issueWorkItems[groupKey] || [];
+            const matchingItems = items.filter(item =>
+              item.author?.id === currentUserId && item.text === entryDescription
+            );
+            userWorkItems.push(...matchingItems);
+          }
+        });
+      }
+
       const togglDurationMinutes = roundToNearest5Minutes(entry.duration / 60);
-      const youtrackDurationMinutes = userWorkItems.reduce((sum, item) =>
-        sum + (item.duration?.minutes || 0), 0
-      );
+
+      let youtrackDurationMinutes: number;
+      if (isGrouped) {
+        // В группированном режиме суммируем длительность всех WorkItems
+        youtrackDurationMinutes = userWorkItems.reduce((sum, item) =>
+          sum + (item.duration?.minutes || 0), 0
+        );
+      } else {
+        // В индивидуальном режиме ищем точное совпадение по длительности
+        // Сравниваем с каждым WorkItem отдельно
+        const matchingItem = userWorkItems.find(item => {
+          const itemDuration = item.duration?.minutes || 0;
+          return Math.abs(itemDuration - togglDurationMinutes) <= 2;
+        });
+        youtrackDurationMinutes = matchingItem ? (matchingItem.duration?.minutes || 0) : 0;
+      }
 
       const durationDiff = Math.abs(togglDurationMinutes - youtrackDurationMinutes);
 
@@ -91,7 +122,7 @@ export const useTimeValidation = (
     if (timeEntries.length > 0 && workItemsMap && currentUserId) {
       validateTimeEntries();
     }
-  }, [timeEntries, workItemsMap, currentUserId]);
+  }, [timeEntries, workItemsMap, currentUserId, isGrouped]);
 
   const getValidationResult = (entryId: number): TimeValidationResult | undefined => {
     return validationResults.find(result => result.entryId === entryId);

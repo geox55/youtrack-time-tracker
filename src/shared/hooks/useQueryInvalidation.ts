@@ -5,11 +5,15 @@ export const useQueryInvalidation = () => {
   const queryClient = useQueryClient();
 
   const invalidateTimeEntries = useCallback(async () => {
-    await queryClient.invalidateQueries({ queryKey: ['toggl-entries'] });
+    await queryClient.invalidateQueries({
+      queryKey: ['toggl-entries'],
+    });
   }, [queryClient]);
 
   const invalidateWorkItems = useCallback(async () => {
-    await queryClient.invalidateQueries({ queryKey: ['youtrack-work-items'] });
+    await queryClient.invalidateQueries({
+      queryKey: ['youtrack-work-items'],
+    });
   }, [queryClient]);
 
   const invalidateAll = useCallback(async () => {

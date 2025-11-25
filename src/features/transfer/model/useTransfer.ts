@@ -1,11 +1,11 @@
 import { useState, useCallback } from 'react';
 import { toast } from 'react-toastify';
 import { TimeEntry, Tokens, WorkItem } from '@/shared/model';
-import { extractIssueId, extractDescription, isEntryTransferred, GroupedTimeEntry, roundToNearest5Minutes } from '@/shared/lib';
+import { extractIssueId, extractDescription, isEntryTransferred, roundToNearest5Minutes } from '@/shared/lib';
 import { useYouTrackTransfer, useYouTrackUser, useSettings } from '@/shared/hooks';
 import { togglApi, youtrackApi } from '@/shared/api';
 
-export const useTransfer = (tokens: Tokens, timeEntries: TimeEntry[], startOfWeek: Date, workItemsMap: Record<string, Record<string, WorkItem[]>>, groupedEntries?: GroupedTimeEntry[]) => {
+export const useTransfer = (tokens: Tokens, timeEntries: TimeEntry[], startOfWeek: Date, workItemsMap: Record<string, Record<string, WorkItem[]>>) => {
   const [transferredEntries, setTransferredEntries] = useState<Set<number>>(new Set());
   const [transferringEntries, setTransferringEntries] = useState<Set<number>>(new Set());
   const [error, setError] = useState<string>('');
@@ -19,22 +19,16 @@ export const useTransfer = (tokens: Tokens, timeEntries: TimeEntry[], startOfWee
 
     try {
       const transferred = new Set<number>();
+      const isGrouped = settings.groupTogglTracks;
 
-      if (groupedEntries && groupedEntries.length > 0) {
-        for (const groupedEntry of groupedEntries) {
-          const issueId = extractIssueId(groupedEntry.description);
-          if (!issueId) continue;
+      for (const entry of timeEntries) {
+        const issueId = extractIssueId(entry.description);
+        if (!issueId) continue;
 
-          if (isEntryTransferred(groupedEntry, workItemsMap, currentUser?.id)) {
-            groupedEntry.originalIds.forEach(id => transferred.add(id));
-          }
-        }
-      } else {
-        for (const entry of timeEntries) {
-          const issueId = extractIssueId(entry.description);
-          if (!issueId) continue;
-
-          if (isEntryTransferred(entry, workItemsMap, currentUser?.id)) {
+        if (isEntryTransferred(entry, workItemsMap, currentUser?.id, isGrouped)) {
+          if (entry.originalIds) {
+            entry.originalIds.forEach(id => transferred.add(id));
+          } else {
             transferred.add(entry.id);
           }
         }
@@ -43,7 +37,7 @@ export const useTransfer = (tokens: Tokens, timeEntries: TimeEntry[], startOfWee
       setTransferredEntries(transferred);
     } catch (err: any) {
     }
-  }, [tokens.youtrackToken, timeEntries, startOfWeek, workItemsMap, currentUser?.id, groupedEntries]);
+  }, [tokens.youtrackToken, timeEntries, startOfWeek, workItemsMap, currentUser?.id, settings.groupTogglTracks]);
 
   const transferToYouTrack = useCallback(async (entry: TimeEntry): Promise<void> => {
     if (!tokens.youtrackToken) {
@@ -67,7 +61,8 @@ export const useTransfer = (tokens: Tokens, timeEntries: TimeEntry[], startOfWee
     let createdWorkItemId: string | null = null;
 
     try {
-      if (isEntryTransferred(entry, workItemsMap, currentUser?.id)) {
+      const isGrouped = settings.groupTogglTracks;
+      if (isEntryTransferred(entry, workItemsMap, currentUser?.id, isGrouped)) {
         const errorMsg = 'Этот трекинг уже перенесен в YouTrack';
         setError(errorMsg);
         toast.error(errorMsg);
@@ -98,7 +93,7 @@ export const useTransfer = (tokens: Tokens, timeEntries: TimeEntry[], startOfWee
 
 
       if (settings.togglWorkspaceId) {
-        const idsToTag = (entry as GroupedTimeEntry).originalIds || [entry.id];
+        const idsToTag = entry.originalIds || [entry.id];
 
         const tagResults = await Promise.all(
           idsToTag.map(id =>
@@ -114,17 +109,12 @@ export const useTransfer = (tokens: Tokens, timeEntries: TimeEntry[], startOfWee
         }
       }
 
-      if (groupedEntries) {
-        const groupedEntry = groupedEntries.find(ge => ge.id === entry.id);
-        if (groupedEntry) {
-          setTransferredEntries(prev => {
-            const newSet = new Set(prev);
-            groupedEntry.originalIds.forEach(id => newSet.add(id));
-            return newSet;
-          });
-        } else {
-          setTransferredEntries(prev => new Set([...prev, entry.id]));
-        }
+      if (entry.originalIds) {
+        setTransferredEntries(prev => {
+          const newSet = new Set(prev);
+          entry.originalIds!.forEach(id => newSet.add(id));
+          return newSet;
+        });
       } else {
         setTransferredEntries(prev => new Set([...prev, entry.id]));
       }
@@ -156,7 +146,7 @@ export const useTransfer = (tokens: Tokens, timeEntries: TimeEntry[], startOfWee
         return newSet;
       });
     }
-  }, [tokens.youtrackToken, startOfWeek, transferMutation, currentUser?.id, groupedEntries, settings.togglWorkspaceId, workItemsMap]);
+  }, [tokens.youtrackToken, startOfWeek, transferMutation, currentUser?.id, settings.togglWorkspaceId, workItemsMap]);
 
   return {
     transferredEntries,

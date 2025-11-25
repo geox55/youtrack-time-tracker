@@ -11,7 +11,7 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
   const [activeTab, setActiveTab] = useState<'api' | 'grouping'>('api');
   const { tokens, setTokens } = useTokens();
   const { settings, updateSetting } = useSettings();
-  const { invalidateTimeEntries } = useQueryInvalidation();
+  const { invalidateAll } = useQueryInvalidation();
 
   // Проверяем, заполнены ли токены и workspace ID
   const isApiConfigured = tokens.togglToken && tokens.youtrackToken && settings.togglWorkspaceId;
@@ -69,7 +69,7 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
                       onChange={(e) => updateSetting('togglWorkspaceId', e.target.value)}
                       onBlur={(e) => {
                         if (e.target.value.trim() !== '') {
-                          invalidateTimeEntries();
+                          invalidateAll();
                         }
                       }}
                       placeholder="1234567"
@@ -100,7 +100,7 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
                       checked={settings.groupTogglTracks}
                       onChange={(e) => {
                         updateSetting('groupTogglTracks', e.target.checked);
-                        invalidateTimeEntries();
+                        invalidateAll();
                       }}
                     />
                     <span className="setting-text">
