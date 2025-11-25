@@ -37,7 +37,7 @@ export const useTransfer = (tokens: Tokens, timeEntries: TimeEntry[], startOfWee
       setTransferredEntries(transferred);
     } catch (err: any) {
     }
-  }, [tokens.youtrackToken, timeEntries, startOfWeek, workItemsMap, currentUser?.id, settings.groupTogglTracks]);
+  }, [tokens.youtrackToken, timeEntries, workItemsMap, currentUser?.id, settings.groupTogglTracks]);
 
   const transferToYouTrack = useCallback(async (entry: TimeEntry): Promise<void> => {
     if (!tokens.youtrackToken) {

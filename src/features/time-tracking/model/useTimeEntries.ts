@@ -16,18 +16,14 @@ export const useTimeEntries = (tokens: Tokens, startOfWeek: Date, groupTracks: b
 
     const filteredEntries = filterEntriesWithYouTrackId(rawEntries);
 
-    console.log('useTimeEntries: groupTracks =', groupTracks, 'filteredEntries count =', filteredEntries.length);
-
     if (groupTracks) {
       // Группируем трекинги по issue ID
       const grouped = groupEntriesByIssueWithOriginalIds(filteredEntries);
       const sortedEntries = sortEntriesByDate(grouped);
-      console.log('useTimeEntries: grouped entries count =', sortedEntries.length);
       return sortedEntries;
     } else {
       // Показываем все трекинги без группировки
       const sortedEntries = sortEntriesByDate(filteredEntries);
-      console.log('useTimeEntries: ungrouped entries count =', sortedEntries.length);
       return sortedEntries;
     }
   }, [rawEntries, groupTracks]);

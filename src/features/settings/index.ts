@@ -1,1 +1,1 @@
-export { SettingsModal } from './ui';
+export { SettingsModal, CheatModeModal } from './ui';

@@ -3,7 +3,7 @@ import { useTokens } from '@/features/auth';
 import { TimeEntriesList, useTimeEntries } from '@/features/time-tracking';
 import { useTransfer } from '@/features/transfer';
 import { useTimeValidation } from '@/features/time-validation';
-import { SettingsModal } from '@/features/settings';
+import { SettingsModal, CheatModeModal } from '@/features/settings';
 import { useAllWorkItems, useYouTrackUser, useSettings, useQueryInvalidation } from '@/shared/hooks';
 import { formatDateRange } from '@/shared/lib';
 
@@ -16,6 +16,13 @@ export const TrackerPage = () => {
     const dateFromUrl = urlParams.get('date');
     return dateFromUrl || new Date().toISOString().split('T')[0];
   });
+
+  const isCheatMode = useMemo(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get('cheatmode') !== null;
+  }, []);
+
+  const [isCheatModeModalOpen, setIsCheatModeModalOpen] = useState<boolean>(false);
 
   const startOfWeek = useMemo(() => {
     const baseDate = new Date(selectedDate);
@@ -101,6 +108,14 @@ export const TrackerPage = () => {
           >
             📊 Таймшиты ↗
           </a>
+          {isCheatMode && (
+            <button
+              className="settings-button"
+              onClick={() => setIsCheatModeModalOpen(true)}
+            >
+              📊 Среднее время
+            </button>
+          )}
           <button
             className={`settings-button ${!isApiConfigured ? 'error' : ''}`}
             onClick={() => setIsSettingsOpen(true)}
@@ -131,6 +146,13 @@ export const TrackerPage = () => {
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
       />
+
+      {isCheatMode && (
+        <CheatModeModal
+          isOpen={isCheatModeModalOpen}
+          onClose={() => setIsCheatModeModalOpen(false)}
+        />
+      )}
     </>
   );
 };
