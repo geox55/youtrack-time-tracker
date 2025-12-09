@@ -2,6 +2,13 @@ export const dateToString = (date: Date): string => {
   return date.toISOString().split('T')[0];
 };
 
+const dateToLocalString = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 export const createDateAtStartOfWeek = (dateString: string): Date => {
   const baseDate = new Date(dateString);
   const startOfWeek = new Date(baseDate);
@@ -13,15 +20,21 @@ export const createDateAtStartOfWeek = (dateString: string): Date => {
 };
 
 export const getWeekRange = (selectedDate: Date): { startDate: string; endDate: string } => {
-  const startDate = selectedDate;
+  // Создаем копии дат для работы в локальном времени
+  const startDate = new Date(selectedDate);
+  startDate.setHours(0, 0, 0, 0);
 
+  // Устанавливаем endDate на понедельник следующей недели (startDate + 7 дней)
+  // Это гарантирует включение всего воскресенья, если API использует exclusive end_date
+  // Если API использует inclusive end_date, это все равно включит воскресенье
   const endDate = new Date(startDate);
-  endDate.setDate(startDate.getDate() + 6);
-  endDate.setHours(23, 59, 59, 999);
+  endDate.setDate(startDate.getDate() + 7);
+  endDate.setHours(0, 0, 0, 0);
 
+  // Форматируем даты в локальном времени, чтобы избежать сдвига из-за UTC
   return {
-    startDate: dateToString(startDate),
-    endDate: dateToString(endDate)
+    startDate: dateToLocalString(startDate),
+    endDate: dateToLocalString(endDate)
   };
 };
 
