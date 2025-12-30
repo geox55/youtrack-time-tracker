@@ -33,11 +33,7 @@ export const CheatModeModal = ({ isOpen, onClose }: CheatModeModalProps) => {
           )}
 
           {!loading && !error && dailyData && (
-            <div>
-              <p style={{ color: '#666', fontSize: '0.9rem', marginBottom: '16px' }}>
-                Задачи: DEV-710, DEV-2349, DEV-2575, DEV-2698
-              </p>
-              
+            <div>              
               <div style={{ maxHeight: '500px', overflowY: 'auto', border: '1px solid #e0e0e0', borderRadius: '8px', padding: '16px' }}>
                 {dailyData.dailyEntries.map((dayEntry) => (
                   <div key={dayEntry.date} style={{ marginBottom: '24px' }}>
