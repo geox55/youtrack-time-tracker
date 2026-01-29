@@ -3,7 +3,7 @@ import { useQueries } from '@tanstack/react-query';
 import { WorkItem } from '@/shared/model';
 import { youtrackApi } from '@/shared/api';
 
-const CHEAT_MODE_ISSUES = ['DEV-710', 'DEV-2349', 'DEV-2575', 'DEV-2698', 'DEV-2833', 'DEV-2971', 'DEV-3074'];
+const CHEAT_MODE_ISSUES = ['DEV-710', 'DEV-2349', 'DEV-2575', 'DEV-2698', 'DEV-2833', 'DEV-2971', 'DEV-3074', 'DEV-3154'];
 const DAYS_IN_MONTH = 30;
 
 const getAllWorkItems = async (
