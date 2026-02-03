@@ -21,3 +21,8 @@ pnpm-lock.yaml
 
 npm-debug.log*
 
+
+# Environment (реальные данные деплоя — не коммитить)
+.env
+.env.local
+.env.*.local
