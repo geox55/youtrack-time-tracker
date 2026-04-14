@@ -66,6 +66,9 @@ export const CheatModeModal = ({ isOpen, onClose }: CheatModeModalProps) => {
                           }}
                         >
                           <div style={{ flex: 1, marginRight: '16px', wordBreak: 'break-word' }}>
+                            <span style={{ color: '#888', fontSize: '0.8rem', marginRight: '8px' }}>
+                              {item.issueId}
+                            </span>
                             <span style={{ color: '#555', fontSize: '0.9rem' }}>
                               {item.text || '(без описания)'}
                             </span>
@@ -97,6 +100,14 @@ export const CheatModeModal = ({ isOpen, onClose }: CheatModeModalProps) => {
                     {formatDuration(Math.round(dailyData.totalMinutes * 60))}
                   </span>
                 </div>
+                {dailyData.trackedIssueIds?.length > 0 && (
+                  <div className="duration-item" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '4px' }}>
+                    <span className="source">Задачи, по которым трекали:</span>
+                    <span className="duration" style={{ fontWeight: 500 }}>
+                      {dailyData.trackedIssueIds.join(', ')}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
           )}

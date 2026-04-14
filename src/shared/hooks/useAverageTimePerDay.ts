@@ -3,9 +3,12 @@ import { useQueries } from '@tanstack/react-query';
 import { WorkItem } from '@/shared/model';
 import { youtrackApi } from '@/shared/api';
 
-const CHEAT_MODE_ISSUES = ['DEV-710', 'DEV-2349', 'DEV-2575', 'DEV-2698', 'DEV-2833', 'DEV-2971', 'DEV-3074', 'DEV-3154'];
-const DAYS_IN_MONTH = 30;
+export interface WorkItemWithIssueId extends WorkItem {
+  issueId: string;
+}
 
+const CHEAT_MODE_ISSUES = ['DEV-710', 'DEV-2349', 'DEV-2575', 'DEV-2698', 'DEV-2833', 'DEV-2971', 'DEV-3074', 'DEV-3154', 'DEV-3284', 'DEV-3477', 'DEV-3649', 'DEV-3845', 'DEV-4017'];
+const DAYS_IN_MONTH = 30;
 const getAllWorkItems = async (
   token: string,
   issueId: string,
@@ -30,7 +33,7 @@ const getAllWorkItems = async (
     });
 
     allWorkItems.push(...filteredItems);
-    
+
     // Проверяем, есть ли еще данные за нужный период
     const lastItemDate = response.length > 0 ? new Date(response[response.length - 1].date) : null;
     if (lastItemDate && lastItemDate < startDate) {
@@ -66,11 +69,16 @@ export const useAverageTimePerDay = (youtrackToken: string | null) => {
   });
 
   const dailyData = useMemo(() => {
-    const allWorkItems: WorkItem[] = [];
-    
+    const allWorkItems: WorkItemWithIssueId[] = [];
+    const trackedIssueIds: string[] = [];
+
     queries.forEach(query => {
-      if (query.data?.workItems) {
-        allWorkItems.push(...query.data.workItems);
+      if (query.data?.workItems?.length && query.data.issueId) {
+        const issueId = query.data.issueId;
+        trackedIssueIds.push(issueId);
+        query.data.workItems.forEach(wi =>
+          allWorkItems.push({ ...wi, issueId })
+        );
       }
     });
 
@@ -78,22 +86,24 @@ export const useAverageTimePerDay = (youtrackToken: string | null) => {
       return null;
     }
 
-    // Группируем по дням с сохранением всех work items
-    const dailyGroups: Record<string, WorkItem[]> = {};
-    
+    const uniqueTrackedIssues = [...new Set(trackedIssueIds)].sort();
+
+    // Группируем по дням с сохранением всех work items (с привязкой к задаче)
+    const dailyGroups: Record<string, WorkItemWithIssueId[]> = {};
+
     allWorkItems.forEach(item => {
       const date = new Date(item.date);
       const dayKey = date.toISOString().split('T')[0];
-      
+
       if (!dailyGroups[dayKey]) {
         dailyGroups[dayKey] = [];
       }
-      
+
       dailyGroups[dayKey].push(item);
     });
 
     // Сортируем дни по дате (от новых к старым)
-    const sortedDays = Object.keys(dailyGroups).sort((a, b) => 
+    const sortedDays = Object.keys(dailyGroups).sort((a, b) =>
       new Date(b).getTime() - new Date(a).getTime()
     );
 
@@ -105,7 +115,7 @@ export const useAverageTimePerDay = (youtrackToken: string | null) => {
     const dailyEntries = sortedDays.map(day => {
       const items = dailyGroups[day];
       const totalMinutes = items.reduce((sum, item) => sum + item.duration.minutes, 0);
-      
+
       return {
         date: day,
         items: items,
@@ -122,6 +132,7 @@ export const useAverageTimePerDay = (youtrackToken: string | null) => {
       averageMinutes,
       totalDays: sortedDays.length,
       totalMinutes,
+      trackedIssueIds: uniqueTrackedIssues,
     };
   }, [queries]);
 
