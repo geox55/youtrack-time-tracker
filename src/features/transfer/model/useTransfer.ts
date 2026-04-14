@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { toast } from 'react-toastify';
 import { TimeEntry, Tokens, WorkItem } from '@/shared/model';
-import { extractIssueId, extractDescription, isEntryTransferred, roundToNearest5Minutes } from '@/shared/lib';
+import { extractIssueId, extractDescription, isEntryTransferred, roundToNearest5Minutes, toLocalDateKey, localDateKeyToLocalMidnightMs } from '@/shared/lib';
 import { useYouTrackTransfer, useYouTrackUser, useSettings } from '@/shared/hooks';
 import { togglApi, youtrackApi } from '@/shared/api';
 
@@ -74,10 +74,9 @@ export const useTransfer = (tokens: Tokens, timeEntries: TimeEntry[], startOfWee
         return;
       }
 
-      const entryDateStr = entry.start.split('T')[0];
+      const entryDateKey = toLocalDateKey(entry.start);
       const entryDescription = extractDescription(entry.description);
-      const entryDateObj = new Date(entryDateStr);
-      const timestamp = entryDateObj.getTime();
+      const timestamp = localDateKeyToLocalMidnightMs(entryDateKey);
 
       const workItem = {
         duration: { minutes: roundToNearest5Minutes(entry.duration / 60) },

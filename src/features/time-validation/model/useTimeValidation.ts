@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { TimeEntry, WorkItem, Tokens } from '@/shared/model';
-import { extractIssueId, extractDescription, roundToNearest5Minutes, getGroupKeyForEntry } from '@/shared/lib';
+import { extractIssueId, extractDescription, roundToNearest5Minutes, getGroupKeyForEntry, toLocalDateKey } from '@/shared/lib';
 import { TimeValidationResult, ValidationError } from '../types';
 
 export const useTimeValidation = (
@@ -27,7 +27,7 @@ export const useTimeValidation = (
       const issueId = extractIssueId(entry.description);
       if (!issueId) continue;
 
-      const entryDate = entry.start.split('T')[0];
+      const entryDate = toLocalDateKey(entry.start);
       const entryDescription = extractDescription(entry.description);
 
       const issueWorkItems = workItemsMap[issueId] || {};

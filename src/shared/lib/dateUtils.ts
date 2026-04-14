@@ -1,12 +1,34 @@
-export const dateToString = (date: Date): string => {
-  return date.toISOString().split('T')[0];
-};
-
 const dateToLocalString = (date: Date): string => {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
+};
+
+/** Календарный день в локальном часовом поясе клиента (YYYY-MM-DD). */
+export const toLocalDateKey = (input: string | Date): string => {
+  const date = typeof input === 'string' ? new Date(input) : input;
+  if (Number.isNaN(date.getTime())) {
+    throw new Error(`Invalid date: ${String(input)}`);
+  }
+  return dateToLocalString(date);
+};
+
+export const dateToString = (date: Date): string => {
+  return toLocalDateKey(date);
+};
+
+/**
+ * Timestamp (мс) для полуночи указанного календарного дня в локальном поясе.
+ * dateKey — формат YYYY-MM-DD (как из toLocalDateKey).
+ */
+export const localDateKeyToLocalMidnightMs = (dateKey: string): number => {
+  const parts = dateKey.split('-').map(Number);
+  if (parts.length !== 3 || parts.some(n => Number.isNaN(n))) {
+    throw new Error(`Invalid local date key: ${dateKey}`);
+  }
+  const [year, month, day] = parts;
+  return new Date(year, month - 1, day, 0, 0, 0, 0).getTime();
 };
 
 export const createDateAtStartOfWeek = (dateString: string): Date => {

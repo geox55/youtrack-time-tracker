@@ -1,4 +1,5 @@
 import { TimeEntry, WorkItem } from '../model/types';
+import { toLocalDateKey } from './dateUtils';
 
 export const filterEntriesWithYouTrackId = (entries: TimeEntry[]): TimeEntry[] => {
   if (!Array.isArray(entries)) {
@@ -17,7 +18,7 @@ export const sortEntriesByDate = (entries: TimeEntry[]): TimeEntry[] => {
 
 export const groupEntriesByDate = (entries: TimeEntry[]): Record<string, TimeEntry[]> => {
   return entries.reduce((groups: Record<string, TimeEntry[]>, entry: TimeEntry) => {
-    const date = entry.start.split('T')[0];
+    const date = toLocalDateKey(entry.start);
     if (!groups[date]) {
       groups[date] = [];
     }
@@ -31,7 +32,7 @@ export const groupEntriesByIssue = (entries: TimeEntry[]): TimeEntry[] => {
 
   entries.forEach(entry => {
     const issueId = extractIssueId(entry.description);
-    const entryDate = entry.start.split('T')[0];
+    const entryDate = toLocalDateKey(entry.start);
     const groupKey = `${issueId}-${entryDate}`;
 
     if (issueId) {
@@ -81,7 +82,7 @@ export const groupEntriesByIssueWithOriginalIds = (entries: TimeEntry[]): TimeEn
   // Группируем трекинги по issue ID + полное описание + дате
   entries.forEach(entry => {
     const issueId = extractIssueId(entry.description);
-    const entryDate = entry.start.split('T')[0];
+    const entryDate = toLocalDateKey(entry.start);
     const description = extractDescription(entry.description);
     const groupKey = `${issueId}-${description}-${entryDate}`; // Ключ: issueId-описание-дата
 
@@ -158,7 +159,7 @@ export const extractDescription = (description: string): string => {
  * @returns ключ группировки: для группированного режима `${description}-${date}`, для несгруппированного `${description}-${entryId}-${date}`
  */
 export const getGroupKeyForEntry = (entry: TimeEntry, isGrouped: boolean): string => {
-  const entryDate = entry.start.split('T')[0];
+  const entryDate = toLocalDateKey(entry.start);
   const entryDescription = extractDescription(entry.description);
 
   if (isGrouped) {
@@ -177,7 +178,7 @@ export const getGroupKeyForEntry = (entry: TimeEntry, isGrouped: boolean): strin
  */
 export const getGroupKeyForWorkItem = (item: WorkItem, isGrouped: boolean, togglId?: number): string => {
   const itemDate = new Date(item.date);
-  const dateKey = itemDate.toISOString().split('T')[0];
+  const dateKey = toLocalDateKey(itemDate);
 
   if (isGrouped) {
     return `${item.text}-${dateKey}`;
@@ -223,7 +224,7 @@ export const isEntryTransferred = (entry: TimeEntry, workItemsMap: Record<string
     // Несгруппированный режим: если точный ключ не найден, используем fallback
     if (relevantItems.length === 0) {
       // Fallback: ищем все группы с совпадающей датой
-      const entryDate = entry.start.split('T')[0];
+      const entryDate = toLocalDateKey(entry.start);
       let matchingItems: WorkItem[] = [];
 
       Object.keys(issueWorkItems).forEach(groupKey => {

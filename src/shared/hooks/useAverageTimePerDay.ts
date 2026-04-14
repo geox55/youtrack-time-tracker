@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useQueries } from '@tanstack/react-query';
 import { WorkItem } from '@/shared/model';
+import { toLocalDateKey } from '@/shared/lib';
 import { youtrackApi } from '@/shared/api';
 
 export interface WorkItemWithIssueId extends WorkItem {
@@ -93,7 +94,7 @@ export const useAverageTimePerDay = (youtrackToken: string | null) => {
 
     allWorkItems.forEach(item => {
       const date = new Date(item.date);
-      const dayKey = date.toISOString().split('T')[0];
+      const dayKey = toLocalDateKey(date);
 
       if (!dailyGroups[dayKey]) {
         dailyGroups[dayKey] = [];

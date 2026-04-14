@@ -5,7 +5,7 @@ import { useTransfer } from '@/features/transfer';
 import { useTimeValidation } from '@/features/time-validation';
 import { SettingsModal, CheatModeModal } from '@/features/settings';
 import { useAllWorkItems, useYouTrackUser, useSettings, useQueryInvalidation } from '@/shared/hooks';
-import { formatDateRange } from '@/shared/lib';
+import { formatDateRange, toLocalDateKey } from '@/shared/lib';
 
 export const TrackerPage = () => {
   const { tokens } = useTokens();
@@ -14,7 +14,7 @@ export const TrackerPage = () => {
   const [selectedDate, setSelectedDate] = useState<string>(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const dateFromUrl = urlParams.get('date');
-    return dateFromUrl || new Date().toISOString().split('T')[0];
+    return dateFromUrl || toLocalDateKey(new Date());
   });
 
   const isCheatMode = useMemo(() => {

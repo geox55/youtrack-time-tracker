@@ -1,6 +1,6 @@
 import { memo, useState } from 'react';
 import { TimeEntryCardProps } from '../types';
-import { extractIssueId, extractDescription } from '@/shared/lib';
+import { extractIssueId, extractDescription, toLocalDateKey } from '@/shared/lib';
 import { ValidationIndicator, ValidationDetails } from '../../time-validation';
 import { YOUTRACK_BASE_URL } from '@/shared/config';
 
@@ -55,7 +55,7 @@ export const TimeEntryCard = memo(({
       </div>
 
       <div className="entry-footer">
-        <span className="entry-date">{entry.start.split('T')[0]}</span>
+        <span className="entry-date">{toLocalDateKey(entry.start)}</span>
 
         <div className="entry-actions">
           {hasValidationError && (
