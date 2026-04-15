@@ -963,12 +963,70 @@ body {
   font-size: 1rem;
 }
 
+.timezone-setting-label {
+  margin-bottom: 0.5rem;
+}
+
+.timezone-select-wrapper {
+  max-width: 420px;
+}
+
+.timezone-select__control {
+  min-height: 40px !important;
+  border-color: #d1d5db !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+}
+
+.timezone-select__control:hover {
+  border-color: #9ca3af !important;
+}
+
+.timezone-select__control--is-focused {
+  border-color: #667eea !important;
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.18) !important;
+}
+
+.timezone-select__menu {
+  z-index: 20 !important;
+}
+
 .setting-description {
   margin-top: 0.5rem;
   padding-left: 2rem;
   color: #666;
   font-size: 0.9rem;
   line-height: 1.4;
+}
+
+.sync-timezone-button {
+  background: #667eea;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.6rem 1rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3);
+}
+
+.sync-timezone-button:hover:not(:disabled) {
+  background: #5a6fd8;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(102, 126, 234, 0.35);
+}
+
+.sync-timezone-button:focus-visible {
+  outline: 2px solid #4c63d2;
+  outline-offset: 2px;
+}
+
+.sync-timezone-button:disabled {
+  background: #a8b4ee;
+  cursor: not-allowed;
+  box-shadow: none;
 }
 
 /* Responsive Design */

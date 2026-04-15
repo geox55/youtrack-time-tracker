@@ -1,6 +1,12 @@
 import { useState } from 'react';
+import TimezoneSelect, { ITimezoneOption } from 'react-timezone-select';
 import { TokensFormInline, useTokens } from '@/features/auth';
+import { togglApi } from '@/shared/api';
 import { useSettings, useQueryInvalidation } from '@/shared/hooks';
+
+type SettingsTab = 'api' | 'grouping' | 'timezone';
+
+type TimezoneSyncStatus = 'idle' | 'loading' | 'success' | 'error';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -8,10 +14,42 @@ interface SettingsModalProps {
 }
 
 export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
-  const [activeTab, setActiveTab] = useState<'api' | 'grouping'>('api');
+  const [activeTab, setActiveTab] = useState<SettingsTab>('api');
+  const [timezoneSyncStatus, setTimezoneSyncStatus] = useState<TimezoneSyncStatus>('idle');
+  const [timezoneSyncError, setTimezoneSyncError] = useState<string>('');
   const { tokens, setTokens } = useTokens();
   const { settings, updateSetting } = useSettings();
   const { invalidateAll } = useQueryInvalidation();
+
+  const handleSyncTimezoneFromToggl = async (): Promise<void> => {
+    if (!tokens.togglToken) {
+      setTimezoneSyncStatus('error');
+      setTimezoneSyncError('Сначала укажите токен Toggl на вкладке «API Токены»');
+      return;
+    }
+    setTimezoneSyncStatus('loading');
+    setTimezoneSyncError('');
+    try {
+      const profile = await togglApi.getProfile(tokens.togglToken);
+      if (!profile?.timezone || typeof profile.timezone !== 'string' || !profile.timezone.trim()) {
+        throw new Error('В ответе Toggl нет поля timezone');
+      }
+      updateSetting('timezone', profile.timezone.trim());
+      invalidateAll();
+      setTimezoneSyncStatus('success');
+      window.setTimeout(() => {
+        setTimezoneSyncStatus('idle');
+      }, 2000);
+    } catch (error) {
+      setTimezoneSyncStatus('error');
+      setTimezoneSyncError(error instanceof Error ? error.message : 'Не удалось загрузить профиль Toggl');
+    }
+  };
+
+  const handleTimezoneChange = (timezone: ITimezoneOption): void => {
+    updateSetting('timezone', timezone.value);
+    invalidateAll();
+  };
 
   // Проверяем, заполнены ли токены и workspace ID
   const isApiConfigured = tokens.togglToken && tokens.youtrackToken && settings.togglWorkspaceId;
@@ -42,6 +80,12 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
               onClick={() => setActiveTab('grouping')}
             >
               Группировка
+            </button>
+            <button
+              className={`tab-button ${activeTab === 'timezone' ? 'active' : ''}`}
+              onClick={() => setActiveTab('timezone')}
+            >
+              Часовой пояс
             </button>
           </div>
 
@@ -115,6 +159,53 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
                   </div>
                 </div>
 
+              </div>
+            )}
+
+            {activeTab === 'timezone' && (
+              <div className="timezone-settings">
+                <h3>Часовой пояс</h3>
+                <p className="settings-description">
+                  По этому поясу определяется календарный день треков (группировка, валидация, перенос в YouTrack).
+                </p>
+
+                <div className="setting-item">
+                  <div className="setting-label timezone-setting-label">
+                    <span className="setting-text">IANA timezone (например, Europe/Moscow)</span>
+                  </div>
+                  <div className="timezone-select-wrapper">
+                    <TimezoneSelect
+                      value={settings.timezone}
+                      onChange={handleTimezoneChange}
+                      classNamePrefix="timezone-select"
+                      menuPlacement="auto"
+                      menuShouldScrollIntoView
+                    />
+                  </div>
+                  <div className="setting-description">
+                    По умолчанию — часовой пояс браузера. Нажмите «Синхронизировать с Toggl», чтобы подставить
+                    timezone из профиля Toggl Track.
+                  </div>
+                </div>
+
+                <div className="setting-item" style={{ marginTop: '1rem' }}>
+                  <button
+                    type="button"
+                    className="sync-timezone-button"
+                    onClick={() => void handleSyncTimezoneFromToggl()}
+                    disabled={timezoneSyncStatus === 'loading'}
+                  >
+                    {timezoneSyncStatus === 'loading' ? 'Загрузка…' : '↻ Синхронизировать с Toggl'}
+                  </button>
+                  {timezoneSyncStatus === 'success' && (
+                    <span style={{ marginLeft: '0.75rem', color: '#28a745' }}>Сохранено</span>
+                  )}
+                  {timezoneSyncStatus === 'error' && timezoneSyncError && (
+                    <div className="api-error-warning" style={{ marginTop: '0.75rem' }}>
+                      {timezoneSyncError}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>

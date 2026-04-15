@@ -3,11 +3,14 @@ import { useState, useEffect } from 'react';
 interface AppSettings {
   groupTogglTracks: boolean;
   togglWorkspaceId: string;
+  /** IANA timezone (e.g. Europe/Moscow) — used for day keys / grouping */
+  timezone: string;
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
   groupTogglTracks: true, // По умолчанию группировка включена
   togglWorkspaceId: '', // По умолчанию пустой Workspace ID
+  timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
 };
 
 const STORAGE_KEY = 'time-tracker-settings';

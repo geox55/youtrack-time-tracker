@@ -16,7 +16,15 @@ const request = async (endpoint: string, token: string, options: any = {}): Prom
   return response.data;
 }
 
+export interface TogglProfile {
+  timezone: string;
+}
+
 export const togglApi = {
+  async getProfile(token: string): Promise<TogglProfile> {
+    return request('/me', token);
+  },
+
   async getTimeEntries(token: string, startDate: string, endDate: string): Promise<TimeEntry[]> {
     return request(
       `/me/time_entries?start_date=${startDate}&end_date=${endDate}`,

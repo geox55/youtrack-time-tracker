@@ -1,11 +1,75 @@
-const dateToLocalString = (date: Date): string => {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
+const SETTINGS_STORAGE_KEY = 'time-tracker-settings';
+
+const getConfiguredTimezone = (): string => {
+  try {
+    const raw = localStorage.getItem(SETTINGS_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw) as { timezone?: string };
+      if (typeof parsed.timezone === 'string' && parsed.timezone.trim() !== '') {
+        return parsed.timezone;
+      }
+    }
+  } catch {
+    // ignore invalid JSON / access errors
+  }
+  return Intl.DateTimeFormat().resolvedOptions().timeZone;
 };
 
-/** Календарный день в локальном часовом поясе клиента (YYYY-MM-DD). */
+const dateKeyInZoneFormatter = (timeZone: string) =>
+  new Intl.DateTimeFormat('en-CA', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  });
+
+/** Calendar date YYYY-MM-DD in the given IANA timezone for this UTC instant. */
+const formatDateKeyInZone = (utcMs: number, timeZone: string): string => {
+  return dateKeyInZoneFormatter(timeZone).format(new Date(utcMs));
+};
+
+/**
+ * UTC ms at the start of the civil calendar day `dateKey` in `timeZone`.
+ */
+const utcMsAtStartOfZonedDay = (dateKey: string, timeZone: string): number => {
+  const parts = dateKey.split('-').map(Number);
+  if (parts.length !== 3 || parts.some(n => Number.isNaN(n))) {
+    throw new Error(`Invalid local date key: ${dateKey}`);
+  }
+  const [year, month, day] = parts;
+
+  let lo = Date.UTC(year, month - 1, day - 1, 0, 0, 0, 0);
+  let hi = Date.UTC(year, month - 1, day + 2, 0, 0, 0, 0);
+
+  while (formatDateKeyInZone(lo, timeZone) >= dateKey) {
+    lo -= 86400000;
+  }
+  while (formatDateKeyInZone(hi - 1, timeZone) < dateKey) {
+    hi += 86400000;
+  }
+
+  while (lo + 1 < hi) {
+    const mid = Math.floor((lo + hi) / 2);
+    if (formatDateKeyInZone(mid, timeZone) < dateKey) {
+      lo = mid;
+    } else {
+      hi = mid;
+    }
+  }
+
+  if (formatDateKeyInZone(hi, timeZone) !== dateKey) {
+    throw new Error(`Could not resolve start of ${dateKey} in ${timeZone}`);
+  }
+
+  return hi;
+};
+
+const dateToLocalString = (date: Date): string => {
+  const timeZone = getConfiguredTimezone();
+  return dateKeyInZoneFormatter(timeZone).format(date);
+};
+
+/** Календарный день в настроенном часовом поясе (YYYY-MM-DD). */
 export const toLocalDateKey = (input: string | Date): string => {
   const date = typeof input === 'string' ? new Date(input) : input;
   if (Number.isNaN(date.getTime())) {
@@ -19,16 +83,12 @@ export const dateToString = (date: Date): string => {
 };
 
 /**
- * Timestamp (мс) для полуночи указанного календарного дня в локальном поясе.
+ * Timestamp (мс) для полуночи указанного календарного дня в настроенном поясе.
  * dateKey — формат YYYY-MM-DD (как из toLocalDateKey).
  */
 export const localDateKeyToLocalMidnightMs = (dateKey: string): number => {
-  const parts = dateKey.split('-').map(Number);
-  if (parts.length !== 3 || parts.some(n => Number.isNaN(n))) {
-    throw new Error(`Invalid local date key: ${dateKey}`);
-  }
-  const [year, month, day] = parts;
-  return new Date(year, month - 1, day, 0, 0, 0, 0).getTime();
+  const timeZone = getConfiguredTimezone();
+  return utcMsAtStartOfZonedDay(dateKey, timeZone);
 };
 
 export const createDateAtStartOfWeek = (dateString: string): Date => {
@@ -42,25 +102,21 @@ export const createDateAtStartOfWeek = (dateString: string): Date => {
 };
 
 export const getWeekRange = (selectedDate: Date): { startDate: string; endDate: string } => {
-  // Создаем копии дат для работы в локальном времени
   const startDate = new Date(selectedDate);
   startDate.setHours(0, 0, 0, 0);
 
-  // Устанавливаем endDate на понедельник следующей недели (startDate + 7 дней)
-  // Это гарантирует включение всего воскресенья, если API использует exclusive end_date
-  // Если API использует inclusive end_date, это все равно включит воскресенье
   const endDate = new Date(startDate);
   endDate.setDate(startDate.getDate() + 7);
   endDate.setHours(0, 0, 0, 0);
 
-  // Форматируем даты в локальном времени, чтобы избежать сдвига из-за UTC
   return {
-    startDate: dateToLocalString(startDate),
-    endDate: dateToLocalString(endDate)
+    startDate: toLocalDateKey(startDate),
+    endDate: toLocalDateKey(endDate),
   };
 };
 
 export const formatDateRange = (selectedDate: Date): string => {
+  const timeZone = getConfiguredTimezone();
   const startDate = selectedDate;
 
   const endDate = new Date(startDate);
@@ -70,7 +126,8 @@ export const formatDateRange = (selectedDate: Date): string => {
     return date.toLocaleDateString('ru-RU', {
       day: '2-digit',
       month: '2-digit',
-      year: 'numeric'
+      year: 'numeric',
+      timeZone,
     });
   };
 
@@ -84,18 +141,22 @@ export const formatDuration = (seconds: number): string => {
 };
 
 export const formatTime = (dateString: string): string => {
+  const timeZone = getConfiguredTimezone();
   return new Date(dateString).toLocaleTimeString('ru-RU', {
     hour: '2-digit',
-    minute: '2-digit'
+    minute: '2-digit',
+    timeZone,
   });
 };
 
 export const formatDate = (dateString: string): string => {
+  const timeZone = getConfiguredTimezone();
   return new Date(dateString).toLocaleDateString('ru-RU', {
     weekday: 'long',
     year: 'numeric',
     month: 'long',
-    day: 'numeric'
+    day: 'numeric',
+    timeZone,
   });
 };
 
