@@ -1,18 +1,7 @@
-const SETTINGS_STORAGE_KEY = 'time-tracker-settings';
+import { resolveUserTimezone } from './timezone';
 
 const getConfiguredTimezone = (): string => {
-  try {
-    const raw = localStorage.getItem(SETTINGS_STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw) as { timezone?: string };
-      if (typeof parsed.timezone === 'string' && parsed.timezone.trim() !== '') {
-        return parsed.timezone;
-      }
-    }
-  } catch {
-    // ignore invalid JSON / access errors
-  }
-  return Intl.DateTimeFormat().resolvedOptions().timeZone;
+  return resolveUserTimezone().timezone;
 };
 
 const dateKeyInZoneFormatter = (timeZone: string) =>
@@ -26,6 +15,28 @@ const dateKeyInZoneFormatter = (timeZone: string) =>
 /** Calendar date YYYY-MM-DD in the given IANA timezone for this UTC instant. */
 const formatDateKeyInZone = (utcMs: number, timeZone: string): string => {
   return dateKeyInZoneFormatter(timeZone).format(new Date(utcMs));
+};
+
+const parseDateKey = (dateKey: string): { year: number; month: number; day: number } => {
+  const parts = dateKey.split('-').map(Number);
+  if (parts.length !== 3 || parts.some(n => Number.isNaN(n))) {
+    throw new Error(`Invalid local date key: ${dateKey}`);
+  }
+  const [year, month, day] = parts;
+  return { year, month, day };
+};
+
+const toUtcDateKey = (date: Date): string => date.toISOString().slice(0, 10);
+
+const addDaysToDateKey = (dateKey: string, days: number): string => {
+  const { year, month, day } = parseDateKey(dateKey);
+  const date = new Date(Date.UTC(year, month - 1, day + days));
+  return toUtcDateKey(date);
+};
+
+const getDayOfWeekForDateKey = (dateKey: string): number => {
+  const { year, month, day } = parseDateKey(dateKey);
+  return new Date(Date.UTC(year, month - 1, day)).getUTCDay();
 };
 
 /**
@@ -91,28 +102,34 @@ export const localDateKeyToLocalMidnightMs = (dateKey: string): number => {
   return utcMsAtStartOfZonedDay(dateKey, timeZone);
 };
 
+/**
+ * Timestamp (мс) для середины календарного дня в настроенном поясе.
+ * Используется для внешних API, чтобы избежать N -> N-1 при UTC-интерпретации полуночи.
+ */
+export const localDateKeyToLocalNoonMs = (dateKey: string): number => {
+  return localDateKeyToLocalMidnightMs(dateKey) + 12 * 60 * 60 * 1000;
+};
+
 export const createDateAtStartOfWeek = (dateString: string): Date => {
-  const baseDate = new Date(dateString);
-  const startOfWeek = new Date(baseDate);
-  const dayOfWeek = baseDate.getDay();
+  const dayOfWeek = getDayOfWeekForDateKey(dateString);
   const daysToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-  startOfWeek.setDate(baseDate.getDate() + daysToMonday);
-  startOfWeek.setHours(0, 0, 0, 0);
-  return startOfWeek;
+  const mondayDateKey = addDaysToDateKey(dateString, daysToMonday);
+  return new Date(localDateKeyToLocalMidnightMs(mondayDateKey));
 };
 
 export const getWeekRange = (selectedDate: Date): { startDate: string; endDate: string } => {
-  const startDate = new Date(selectedDate);
-  startDate.setHours(0, 0, 0, 0);
+  const startDateKey = toLocalDateKey(selectedDate);
+  const endDateKey = addDaysToDateKey(startDateKey, 7);
+  const startUtcMs = localDateKeyToLocalMidnightMs(startDateKey);
+  const endUtcMs = localDateKeyToLocalMidnightMs(endDateKey);
+  const startDateUtc = new Date(startUtcMs);
+  const endDateUtc = new Date(endUtcMs);
 
-  const endDate = new Date(startDate);
-  endDate.setDate(startDate.getDate() + 7);
-  endDate.setHours(0, 0, 0, 0);
-
-  return {
-    startDate: toLocalDateKey(startDate),
-    endDate: toLocalDateKey(endDate),
+  const result = {
+    startDate: toUtcDateKey(startDateUtc),
+    endDate: toUtcDateKey(endDateUtc),
   };
+  return result;
 };
 
 export const formatDateRange = (selectedDate: Date): string => {

@@ -5,12 +5,15 @@ interface AppSettings {
   togglWorkspaceId: string;
   /** IANA timezone (e.g. Europe/Moscow) — used for day keys / grouping */
   timezone: string;
+  /** Timezone from Toggl profile, has priority over manual timezone setting */
+  togglProfileTimezone: string;
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
   groupTogglTracks: true, // По умолчанию группировка включена
   togglWorkspaceId: '', // По умолчанию пустой Workspace ID
   timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+  togglProfileTimezone: '',
 };
 
 const STORAGE_KEY = 'time-tracker-settings';
@@ -27,8 +30,7 @@ export const useSettings = () => {
         const parsedSettings = JSON.parse(stored);
         setSettings({ ...DEFAULT_SETTINGS, ...parsedSettings });
       }
-    } catch (error) {
-      console.warn('Failed to load settings from localStorage:', error);
+    } catch {
     } finally {
       setIsLoaded(true);
     }
@@ -39,8 +41,7 @@ export const useSettings = () => {
     if (isLoaded) {
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
-      } catch (error) {
-        console.warn('Failed to save settings to localStorage:', error);
+      } catch {
       }
     }
   }, [settings, isLoaded]);

@@ -1,9 +1,28 @@
+/// <reference types="vitest/config" />
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tsconfigPaths from 'vite-tsconfig-paths'
 
 export default defineConfig({
   plugins: [react(), tsconfigPaths()],
+  test: {
+    globals: true,
+    environment: 'node',
+    include: ['src/**/__tests__/**/*.test.ts'],
+    testTimeout: 5000,
+    forks: { maxForks: 2 },
+    coverage: {
+      provider: 'v8',
+      include: [
+        'src/shared/lib/**/*.ts',
+        'src/shared/api/**/*.ts',
+      ],
+      exclude: [
+        'src/**/__tests__/**',
+        'src/**/index.ts',
+      ],
+    },
+  },
   server: {
     port: 3000,
     open: true,
@@ -15,18 +34,7 @@ export default defineConfig({
         secure: true,
         headers: {
           'Referrer-Policy': 'no-referrer-when-downgrade'
-        },
-        configure: (proxy, _options) => {
-          proxy.on('error', (err, _req, _res) => {
-            console.log('proxy error', err);
-          });
-          proxy.on('proxyReq', (proxyReq, req, _res) => {
-            console.log('Sending Request to the Target:', req.method, req.url);
-          });
-          proxy.on('proxyRes', (proxyRes, req, _res) => {
-            console.log('Received Response from the Target:', proxyRes.statusCode, req.url);
-          });
-        },
+        }
       },
       '/api/toggl': {
         target: 'https://api.track.toggl.com/api/v9',
@@ -35,17 +43,6 @@ export default defineConfig({
         rewrite: (path: string) => path.replace(/^\/api\/toggl/, '/api'),
         headers: {
           'Referrer-Policy': 'no-referrer-when-downgrade'
-        },
-        configure: (proxy, _options) => {
-          proxy.on('error', (err, _req, _res) => {
-            console.log('toggl proxy error', err);
-          });
-          proxy.on('proxyReq', (proxyReq, req, _res) => {
-            console.log('Sending Toggl Request:', req.method, req.url);
-          });
-          proxy.on('proxyRes', (proxyRes, req, _res) => {
-            console.log('Received Toggl Response:', proxyRes.statusCode, req.url);
-          });
         }
       }
     },

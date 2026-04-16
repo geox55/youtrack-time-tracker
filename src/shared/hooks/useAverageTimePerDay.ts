@@ -8,6 +8,11 @@ export interface WorkItemWithIssueId extends WorkItem {
   issueId: string;
 }
 
+interface IssueWorkItemsResult {
+  issueId: string;
+  workItems: WorkItem[];
+}
+
 const CHEAT_MODE_ISSUES = ['DEV-710', 'DEV-2349', 'DEV-2575', 'DEV-2698', 'DEV-2833', 'DEV-2971', 'DEV-3074', 'DEV-3154', 'DEV-3284', 'DEV-3477', 'DEV-3649', 'DEV-3845', 'DEV-4017'];
 const DAYS_IN_MONTH = 30;
 const getAllWorkItems = async (
@@ -61,7 +66,9 @@ export const useAverageTimePerDay = (youtrackToken: string | null) => {
     queries: CHEAT_MODE_ISSUES.map(issueId => ({
       queryKey: ['cheatmode-work-items', issueId, startDate.getTime()],
       queryFn: async () => {
-        if (!youtrackToken) return [];
+        if (!youtrackToken) {
+          return { issueId, workItems: [] };
+        }
         const workItems = await getAllWorkItems(youtrackToken, issueId, startDate);
         return { issueId, workItems };
       },
@@ -74,10 +81,12 @@ export const useAverageTimePerDay = (youtrackToken: string | null) => {
     const trackedIssueIds: string[] = [];
 
     queries.forEach(query => {
-      if (query.data?.workItems?.length && query.data.issueId) {
-        const issueId = query.data.issueId;
+      const data = query.data as IssueWorkItemsResult | undefined;
+
+      if (data?.workItems?.length && data.issueId) {
+        const issueId = data.issueId;
         trackedIssueIds.push(issueId);
-        query.data.workItems.forEach(wi =>
+        data.workItems.forEach((wi: WorkItem) =>
           allWorkItems.push({ ...wi, issueId })
         );
       }

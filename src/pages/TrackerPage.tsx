@@ -5,7 +5,7 @@ import { useTransfer } from '@/features/transfer';
 import { useTimeValidation } from '@/features/time-validation';
 import { SettingsModal, CheatModeModal } from '@/features/settings';
 import { useAllWorkItems, useYouTrackUser, useSettings, useQueryInvalidation } from '@/shared/hooks';
-import { formatDateRange, toLocalDateKey } from '@/shared/lib';
+import { createDateAtStartOfWeek, formatDateRange, toLocalDateKey } from '@/shared/lib';
 
 export const TrackerPage = () => {
   const { tokens } = useTokens();
@@ -25,13 +25,7 @@ export const TrackerPage = () => {
   const [isCheatModeModalOpen, setIsCheatModeModalOpen] = useState<boolean>(false);
 
   const startOfWeek = useMemo(() => {
-    const baseDate = new Date(selectedDate);
-    const startOfWeek = new Date(baseDate);
-    const dayOfWeek = baseDate.getDay();
-    const daysToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-    startOfWeek.setDate(baseDate.getDate() + daysToMonday);
-    startOfWeek.setHours(0, 0, 0, 0);
-    return startOfWeek;
+    return createDateAtStartOfWeek(selectedDate);
   }, [selectedDate]);
 
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);

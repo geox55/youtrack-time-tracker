@@ -18,11 +18,12 @@ export const sortEntriesByDate = (entries: TimeEntry[]): TimeEntry[] => {
 
 export const groupEntriesByDate = (entries: TimeEntry[]): Record<string, TimeEntry[]> => {
   return entries.reduce((groups: Record<string, TimeEntry[]>, entry: TimeEntry) => {
-    const date = toLocalDateKey(entry.start);
-    if (!groups[date]) {
-      groups[date] = [];
+    const groupedDateKey = toLocalDateKey(entry.start);
+
+    if (!groups[groupedDateKey]) {
+      groups[groupedDateKey] = [];
     }
-    groups[date].push(entry);
+    groups[groupedDateKey].push(entry);
     return groups;
   }, {});
 };

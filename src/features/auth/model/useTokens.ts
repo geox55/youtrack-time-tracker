@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Tokens } from 'shared/model';
+import { Tokens } from '@/shared/model';
 
 export const useTokens = () => {
   const [tokens, setTokens] = useState<Tokens>({

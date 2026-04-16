@@ -34,7 +34,9 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
       if (!profile?.timezone || typeof profile.timezone !== 'string' || !profile.timezone.trim()) {
         throw new Error('В ответе Toggl нет поля timezone');
       }
-      updateSetting('timezone', profile.timezone.trim());
+      const togglTimezone = profile.timezone.trim();
+      updateSetting('togglProfileTimezone', togglTimezone);
+      updateSetting('timezone', togglTimezone);
       invalidateAll();
       setTimezoneSyncStatus('success');
       window.setTimeout(() => {
@@ -47,6 +49,8 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
   };
 
   const handleTimezoneChange = (timezone: ITimezoneOption): void => {
+    // Manual timezone selection becomes active only when Toggl profile timezone is cleared.
+    updateSetting('togglProfileTimezone', '');
     updateSetting('timezone', timezone.value);
     invalidateAll();
   };
@@ -183,8 +187,8 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
                     />
                   </div>
                   <div className="setting-description">
-                    По умолчанию — часовой пояс браузера. Нажмите «Синхронизировать с Toggl», чтобы подставить
-                    timezone из профиля Toggl Track.
+                    Активный источник TZ: {settings.togglProfileTimezone ? 'Toggl profile' : 'ручная настройка/браузер'}.
+                    Нажмите «Синхронизировать с Toggl», чтобы использовать timezone из профиля Toggl Track.
                   </div>
                 </div>
 
