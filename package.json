@@ -31,7 +31,6 @@
     "jsdom": "^29.0.2",
     "typescript": "^5.3.3",
     "vite": "^8.0.8",
-    "vite-tsconfig-paths": "^5.1.4",
     "vitest": "^4.1.4"
   }
 }
