@@ -17,7 +17,8 @@ fi
 # Настройки: из .env или аргументы (обязательны user и host)
 SERVER_USER=${1:-$DEPLOY_SERVER_USER}
 SERVER_HOST=${2:-$DEPLOY_SERVER_HOST}
-REMOTE_PATH=${DEPLOY_REMOTE_PATH:-/var/www/time-tracker}
+REMOTE_PATH=${DEPLOY_REMOTE_PATH:-/var/www/youtrack-time-tracker-prod}
+DEPLOY_PUBLIC_URL=${DEPLOY_PUBLIC_URL:-https://tracker.geox55.ru}
 LOCAL_DIST=${DEPLOY_LOCAL_DIST:-./dist}
 
 if [ -z "$SERVER_USER" ] || [ -z "$SERVER_HOST" ]; then
@@ -30,7 +31,7 @@ cd "$PROJECT_ROOT" || exit 1
 
 # Проверяем, что папка dist существует
 if [ ! -d "$LOCAL_DIST" ]; then
-    echo "❌ Папка $LOCAL_DIST не найдена. Сначала выполните npm run build"
+    echo "❌ Папка $LOCAL_DIST не найдена. Сначала выполните pnpm run build"
     exit 1
 fi
 
@@ -47,7 +48,7 @@ rsync -avz --delete \
 # Проверяем результат
 if [ $? -eq 0 ]; then
     echo "✅ Деплой успешно завершен!"
-    echo "🌐 Сайт доступен по адресу: http://$SERVER_HOST"
+    echo "🌐 Сайт доступен по адресу: $DEPLOY_PUBLIC_URL"
 else
     echo "❌ Ошибка при деплое"
     exit 1

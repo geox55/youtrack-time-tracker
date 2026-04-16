@@ -17,7 +17,7 @@ fi
 # Настройки: из .env или аргументы (обязательны user и host)
 SERVER_USER=${1:-$DEPLOY_SERVER_USER}
 SERVER_HOST=${2:-$DEPLOY_SERVER_HOST}
-REMOTE_PATH=${DEPLOY_TEST_REMOTE_PATH:-/var/www/tracker-test}
+REMOTE_PATH=${DEPLOY_TEST_REMOTE_PATH:-/var/www/youtrack-time-tracker-test}
 LOCAL_DIST=${DEPLOY_LOCAL_DIST:-./dist}
 
 if [ -z "$SERVER_USER" ] || [ -z "$SERVER_HOST" ]; then
@@ -47,7 +47,7 @@ rsync -avz --delete \
 # Проверяем результат
 if [ $? -eq 0 ]; then
     echo "✅ Деплой тестовой версии успешно завершен!"
-    echo "🌐 Сайт доступен по адресу: https://tracker.$SERVER_HOST"
+    echo "🌐 Сайт доступен по адресу: https://pre-tracker.$SERVER_HOST"
 else
     echo "❌ Ошибка при деплое"
     exit 1
